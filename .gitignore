@@ -1,0 +1,44 @@
+# Environment — NEVER commit your .env
+.env
+.env.local
+
+# Database files
+data/
+*.db
+*.sqlite
+
+# Python
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Node / Frontend
+node_modules/
+frontend/dist/
+frontend/.vite/
+.npm/
+
+# PocketBase binary and data
+pocketbase
+pocketbase.exe
+pb_data/
+pb_migrations/
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editor
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
