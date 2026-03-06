@@ -8,6 +8,9 @@ from datetime import date
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 
+import sys
+sys.path.insert(0, os.path.dirname(__file__))
+
 from config import Config
 from db import get_store
 
