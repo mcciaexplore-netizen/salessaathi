@@ -3,13 +3,13 @@ import { useState } from "react";
 const PB_DOWNLOAD_URL = "https://pocketbase.io/docs/";
 
 export default function PocketBaseSetup({ value, onChange, onNext, onBack }) {
-  const [pbUrl,     setPbUrl]     = useState(value.pb_url     || "http://127.0.0.1:8090");
-  const [pbEmail,   setPbEmail]   = useState(value.pb_email   || "");
-  const [pbPass,    setPbPass]    = useState(value.pb_password || "");
-  const [phase,     setPhase]     = useState("guide");   // guide | connect
-  const [testing,   setTesting]   = useState(false);
-  const [tested,    setTested]    = useState(false);
-  const [error,     setError]     = useState("");
+  const [pbUrl, setPbUrl] = useState(value.pb_url || "http://127.0.0.1:8090");
+  const [pbEmail, setPbEmail] = useState(value.pb_email || "");
+  const [pbPass, setPbPass] = useState(value.pb_password || "");
+  const [phase, setPhase] = useState("guide");   // guide | connect
+  const [testing, setTesting] = useState(false);
+  const [tested, setTested] = useState(false);
+  const [error, setError] = useState("");
 
   const testConnection = async () => {
     setTesting(true);
@@ -53,7 +53,7 @@ export default function PocketBaseSetup({ value, onChange, onNext, onBack }) {
                 n: "1",
                 title: "Download PocketBase",
                 desc: "Visit pocketbase.io and download the version for your operating system (Windows, Mac, or Linux). It's a single file, no installer.",
-                action: <a href={PB_DOWNLOAD_URL} target="_blank" rel="noreferrer" style={linkBtn}>Download PocketBase →</a>,
+                action: <a href={PB_DOWNLOAD_URL} target="_blank" rel="noreferrer" style={linkBtn}>Download PocketBase</a>,
               },
               {
                 n: "2",
@@ -97,7 +97,7 @@ export default function PocketBaseSetup({ value, onChange, onNext, onBack }) {
           </div>
 
           <button onClick={() => setPhase("connect")} style={btnPrimary}>
-            I've done this — Connect now →
+            I've done this — Connect now
           </button>
         </>
       ) : (
@@ -126,15 +126,15 @@ export default function PocketBaseSetup({ value, onChange, onNext, onBack }) {
 
           {tested ? (
             <>
-              <SuccessBox msg="✅ Connected to PocketBase successfully" />
-              <button onClick={onNext} style={btnPrimary}>Continue →</button>
+              <SuccessBox msg="Connected successfully" />
+              <button onClick={onNext} style={btnPrimary}>Continue</button>
             </>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               <button onClick={testConnection} disabled={testing} style={btnPrimary}>
-                {testing ? "Connecting…" : "Test connection & Continue →"}
+                {testing ? "Connecting…" : "Test connection & Continue"}
               </button>
-              <button onClick={() => setPhase("guide")} style={btnSecondary}>← Back to guide</button>
+              <button onClick={() => setPhase("guide")} style={btnSecondary}>Back to guide</button>
             </div>
           )}
         </>
@@ -144,7 +144,7 @@ export default function PocketBaseSetup({ value, onChange, onNext, onBack }) {
 }
 
 const BackBtn = ({ onClick }) => (
-  <button onClick={onClick} style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b", fontSize: "13px", padding: "0 0 16px", display: "flex", alignItems: "center", gap: "4px" }}>← Back</button>
+  <button onClick={onClick} style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b", fontSize: "13px", padding: "0 0 16px", display: "flex", alignItems: "center", gap: "4px" }}>Back</button>
 );
 const StepLabel = ({ children }) => (
   <div style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.1em", color: "#3b82f6", fontWeight: 600, marginBottom: "6px" }}>{children}</div>
@@ -156,11 +156,11 @@ const ErrorBox = ({ msg }) => (
   <div style={{ background: "#fee2e2", borderRadius: "8px", padding: "12px 14px", marginBottom: "16px", color: "#991b1b", fontSize: "13px" }}>{msg}</div>
 );
 
-const h2         = { fontFamily: "'Sora', sans-serif", fontSize: "20px", fontWeight: 700, color: "#0f172a", marginBottom: "4px" };
-const subtext    = { fontSize: "13.5px", color: "#64748b", lineHeight: 1.6 };
+const h2 = { fontFamily: "'Sora', sans-serif", fontSize: "20px", fontWeight: 700, color: "#0f172a", marginBottom: "4px" };
+const subtext = { fontSize: "13.5px", color: "#64748b", lineHeight: 1.6 };
 const labelStyle = { display: "block", fontSize: "13px", fontWeight: 600, color: "#374151", marginBottom: "6px" };
 const inputStyle = { width: "100%", padding: "10px 12px", border: "1.5px solid #e2e8f0", borderRadius: "8px", fontSize: "13.5px", color: "#1e293b", outline: "none" };
-const hint       = { fontSize: "12px", color: "#94a3b8", marginTop: "5px" };
+const hint = { fontSize: "12px", color: "#94a3b8", marginTop: "5px" };
 const btnPrimary = { width: "100%", padding: "14px", background: "#1d4ed8", color: "#fff", border: "none", borderRadius: "10px", fontSize: "15px", fontWeight: 600, cursor: "pointer" };
 const btnSecondary = { width: "100%", padding: "12px", background: "#f8fafc", color: "#475569", border: "1px solid #e2e8f0", borderRadius: "10px", fontSize: "14px", fontWeight: 500, cursor: "pointer" };
-const linkBtn    = { display: "inline-block", background: "#eff6ff", color: "#1d4ed8", padding: "6px 12px", borderRadius: "6px", fontSize: "13px", fontWeight: 600, textDecoration: "none" };
+const linkBtn = { display: "inline-block", background: "#eff6ff", color: "#1d4ed8", padding: "6px 12px", borderRadius: "6px", fontSize: "13px", fontWeight: 600, textDecoration: "none" };

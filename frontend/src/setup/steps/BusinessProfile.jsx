@@ -14,13 +14,13 @@ const LANGUAGES = [
 
 export default function BusinessProfile({ value, onChange, onNext, onBack }) {
   const [form, setForm] = useState({
-    name:       value.name       || "",
+    name: value.name || "",
     owner_name: value.owner_name || "",
-    industry:   value.industry   || "",
-    phone:      value.phone      || "",
-    email:      value.email      || "",
-    city:       value.city       || "",
-    language:   value.language   || "en",
+    industry: value.industry || "",
+    phone: value.phone || "",
+    email: value.email || "",
+    city: value.city || "",
+    language: value.language || "en",
   });
   const [error, setError] = useState("");
 
@@ -98,7 +98,7 @@ export default function BusinessProfile({ value, onChange, onNext, onBack }) {
 
       {error && <ErrorBox msg={error} />}
 
-      <button onClick={handleNext} style={btnPrimary}>Continue →</button>
+      <button onClick={handleNext} style={btnPrimary}>Continue</button>
     </div>
   );
 }
@@ -109,12 +109,12 @@ const Field = ({ label, children }) => (
     {children}
   </div>
 );
-const BackBtn    = ({ onClick }) => <button onClick={onClick} style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b", fontSize: "13px", padding: "0 0 16px", display: "flex", alignItems: "center", gap: "4px" }}>← Back</button>;
-const StepLabel  = ({ children }) => <div style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.1em", color: "#3b82f6", fontWeight: 600, marginBottom: "6px" }}>{children}</div>;
-const ErrorBox   = ({ msg }) => <div style={{ background: "#fee2e2", borderRadius: "8px", padding: "12px 14px", marginBottom: "16px", color: "#991b1b", fontSize: "13px" }}>{msg}</div>;
+const BackBtn = ({ onClick }) => <button onClick={onClick} style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b", fontSize: "13px", padding: "0 0 16px", display: "flex", alignItems: "center", gap: "4px" }}>Back</button>;
+const StepLabel = ({ children }) => <div style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.1em", color: "#3b82f6", fontWeight: 600, marginBottom: "6px" }}>{children}</div>;
+const ErrorBox = ({ msg }) => <div style={{ background: "#fee2e2", borderRadius: "8px", padding: "12px 14px", marginBottom: "16px", color: "#991b1b", fontSize: "13px" }}>{msg}</div>;
 
-const h2         = { fontFamily: "'Sora', sans-serif", fontSize: "20px", fontWeight: 700, color: "#0f172a", marginBottom: "4px" };
-const subtext    = { fontSize: "13.5px", color: "#64748b", lineHeight: 1.6 };
+const h2 = { fontFamily: "'Sora', sans-serif", fontSize: "20px", fontWeight: 700, color: "#0f172a", marginBottom: "4px" };
+const subtext = { fontSize: "13.5px", color: "#64748b", lineHeight: 1.6 };
 const labelStyle = { display: "block", fontSize: "13px", fontWeight: 600, color: "#374151", marginBottom: "6px" };
 const inputStyle = { width: "100%", padding: "10px 12px", border: "1.5px solid #e2e8f0", borderRadius: "8px", fontSize: "13.5px", color: "#1e293b", outline: "none", background: "#fff" };
 const btnPrimary = { width: "100%", padding: "14px", background: "#1d4ed8", color: "#fff", border: "none", borderRadius: "10px", fontSize: "15px", fontWeight: 600, cursor: "pointer" };

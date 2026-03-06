@@ -16,11 +16,10 @@ def get_store() -> DataStore:
     db_type = os.getenv("DB_TYPE", "sqlite").lower()
 
     if db_type == "sqlite":
+        from config import Config
         from .sql_store import SQLDataStore
-        # Resolve path relative to the project root (one level up from backend/)
-        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        raw_path = os.getenv("SQLITE_PATH", "./data/salessaathi.db")
-        db_path = os.path.join(project_root, raw_path) if not os.path.isabs(raw_path) else raw_path
+        # Resolve path using Config which already handles Vercel /tmp logic
+        db_path = Config.SQLITE_PATH
         try:
             os.makedirs(os.path.dirname(db_path), exist_ok=True)
         except OSError:

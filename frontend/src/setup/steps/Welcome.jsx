@@ -1,7 +1,7 @@
 export default function Welcome({ onNext }) {
   return (
     <div style={{ padding: "40px 36px" }}>
-      <div style={{ fontSize: "36px", marginBottom: "16px" }}>👋</div>
+      <div style={{ fontSize: "36px", marginBottom: "16px" }}></div>
       <h2 style={{
         fontFamily: "'Sora', sans-serif", fontSize: "24px",
         fontWeight: 700, color: "#0f172a", marginBottom: "12px",
@@ -13,9 +13,9 @@ export default function Welcome({ onNext }) {
       </p>
       <div style={{ marginBottom: "28px" }}>
         {[
-          ["📦", "Choose where your data is stored"],
-          ["🏢", "Enter your business details"],
-          ["🤖", "Add a free AI key to power the note-reading"],
+          ["", "Choose where your data is stored"],
+          ["", "Enter your business details"],
+          ["", "Add a free AI key to power the note-reading"],
         ].map(([icon, text], i) => (
           <div key={i} style={{
             display: "flex", alignItems: "center", gap: "12px",
@@ -40,7 +40,7 @@ export default function Welcome({ onNext }) {
       </div>
 
       <button onClick={onNext} style={btnStyle("#1d4ed8")}>
-        Let's get started →
+        Let's get started
       </button>
     </div>
   );

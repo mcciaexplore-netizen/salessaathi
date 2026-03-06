@@ -114,9 +114,9 @@ export default function LogMeeting({ navigate }) {
 
           {preview && (
             <button onClick={() => { setFile(null); setPreview(null); }} style={{
-              background: "none", border: "none", color: "#ef4444", fontSize: "14px",
-              cursor: "pointer", marginBottom: "24px", fontWeight: 500
-            }}>✕ Remove photo and try another</button>
+              background: "#fee2e2", border: "1px solid #fca5a5", color: "#991b1b", fontSize: "14px",
+              cursor: "pointer", marginBottom: "24px", fontWeight: 600, padding: "8px 16px", borderRadius: "8px"
+            }}>Remove photo and try another</button>
           )}
         </div>
       ) : (
