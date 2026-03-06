@@ -48,7 +48,7 @@ def test_db_connection():
     db_type = data.get("db_type", "sqlite")
     try:
         if db_type == "sqlite":
-            from db.sqlite_store import SQLiteDataStore
+            from db.sql_store import SQLDataStore
             project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             raw  = data.get("sqlite_path", "./data/salessaathi.db")
             path = os.path.join(project_root, raw) if not os.path.isabs(raw) else raw
@@ -60,7 +60,17 @@ def test_db_connection():
                 else:
                     pass
             
-            store = SQLiteDataStore(path)
+            store = SQLDataStore(f"sqlite:///{path}")
+            store.init_schema()
+            ok = store.is_ready()
+        elif db_type in ("supabase", "postgres"):
+            from db.sql_store import SQLDataStore
+            db_url = data.get("supabase_db_url") or data.get("database_url")
+            if not db_url:
+                db_url = os.environ.get("SUPABASE_DB_URL") or os.environ.get("DATABASE_URL")
+            if not db_url:
+                raise ValueError("No database URL provided for Supabase.")
+            store = SQLDataStore(db_url)
             store.init_schema()
             ok = store.is_ready()
         elif db_type == "pocketbase":
@@ -91,6 +101,9 @@ def save_setup():
     env_lines = [f"DB_TYPE={db_type}", "SETUP_DONE=true", f"SECRET_KEY={_random_secret()}"]
     if db_type == "sqlite":
         env_lines.append(f"SQLITE_PATH={db_config.get('sqlite_path', './data/salessaathi.db')}")
+    elif db_type in ("supabase", "postgres"):
+        url = db_config.get("supabase_db_url") or db_config.get("database_url", "")
+        env_lines.append(f"SUPABASE_DB_URL={url}")
     elif db_type == "pocketbase":
         env_lines.append(f"POCKETBASE_URL={db_config.get('pb_url', 'http://127.0.0.1:8090')}")
         env_lines.append(f"POCKETBASE_EMAIL={db_config.get('pb_email', '')}")
@@ -106,6 +119,10 @@ def save_setup():
     os.environ.update({"DB_TYPE": db_type, "SETUP_DONE": "true"})
     if db_type == "sqlite":
         os.environ["SQLITE_PATH"] = db_config.get("sqlite_path", "./data/salessaathi.db")
+    elif db_type in ("supabase", "postgres"):
+        url = db_config.get("supabase_db_url") or db_config.get("database_url", "")
+        if url:
+             os.environ["SUPABASE_DB_URL"] = url
 
     get_store.cache_clear()
     store = get_store()

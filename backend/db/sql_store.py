@@ -1,6 +1,6 @@
 """
-SQLite adapter using SQLAlchemy.
-Zero-setup — DB file is created automatically on first run.
+SQL adapter using SQLAlchemy.
+Supports SQLite and PostgreSQL.
 """
 
 import uuid
@@ -121,15 +121,20 @@ def _row(obj) -> dict:
     return d
 
 
-class SQLiteDataStore(DataStore):
+class SQLDataStore(DataStore):
 
-    def __init__(self, db_path: str):
+    def __init__(self, db_url: str):
         """
-        db_path: filesystem path to the .db file, e.g. /home/user/.salessaathi/data.db
+        db_url: SQLAlchemy connection string, e.g. sqlite:////home/.../data.db or postgresql://user:pass@host/db
         """
+        # Ensure we use the proper postgresql:// dialect if users use postgres://
+        if db_url.startswith("postgres://"):
+            db_url = db_url.replace("postgres://", "postgresql://", 1)
+            
+        connect_args = {"check_same_thread": False} if db_url.startswith("sqlite") else {}
         self._engine = create_engine(
-            f"sqlite:///{db_path}",
-            connect_args={"check_same_thread": False},
+            db_url,
+            connect_args=connect_args,
         )
         self._Session = sessionmaker(bind=self._engine)
 

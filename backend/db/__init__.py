@@ -16,7 +16,7 @@ def get_store() -> DataStore:
     db_type = os.getenv("DB_TYPE", "sqlite").lower()
 
     if db_type == "sqlite":
-        from .sqlite_store import SQLiteDataStore
+        from .sql_store import SQLDataStore
         # Resolve path relative to the project root (one level up from backend/)
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         raw_path = os.getenv("SQLITE_PATH", "./data/salessaathi.db")
@@ -25,7 +25,15 @@ def get_store() -> DataStore:
             os.makedirs(os.path.dirname(db_path), exist_ok=True)
         except OSError:
             pass
-        store = SQLiteDataStore(db_path)
+        db_url = f"sqlite:///{db_path}"
+        store = SQLDataStore(db_url)
+
+    elif db_type in ("supabase", "postgres"):
+        from .sql_store import SQLDataStore
+        db_url = os.getenv("SUPABASE_DB_URL") or os.getenv("DATABASE_URL")
+        if not db_url:
+            raise ValueError("For Supabase/Postgres, SUPABASE_DB_URL or DATABASE_URL must be set in .env")
+        store = SQLDataStore(db_url)
 
     elif db_type == "pocketbase":
         from .pocketbase_store import PocketBaseDataStore
