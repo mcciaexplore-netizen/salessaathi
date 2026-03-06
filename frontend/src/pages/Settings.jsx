@@ -2,18 +2,18 @@ import { useEffect, useState } from "react";
 
 const PROVIDERS = [
   { id: "gemini", name: "Google Gemini", icon: "🔷", getKeyUrl: "https://aistudio.google.com/app/apikey", desc: "Free · Vision support · Recommended" },
-  { id: "groq",   name: "Groq",          icon: "⚡",  getKeyUrl: "https://console.groq.com/keys",         desc: "Free · Very fast · Text only" },
-  { id: "openai", name: "OpenAI",        icon: "🟢",  getKeyUrl: "https://platform.openai.com/api-keys",  desc: "Paid · GPT-4" },
+  { id: "groq", name: "Groq", icon: "⚡", getKeyUrl: "https://console.groq.com/keys", desc: "Free · Very fast · Text only" },
+  { id: "openai", name: "OpenAI", icon: "🟢", getKeyUrl: "https://platform.openai.com/api-keys", desc: "Paid · GPT-4" },
 ];
 
 export default function Settings() {
-  const [keys,     setKeys]     = useState([]);
+  const [keys, setKeys] = useState([]);
   const [business, setBusiness] = useState({});
-  const [newKey,   setNewKey]   = useState({ provider: "gemini", key: "", label: "" });
-  const [adding,   setAdding]   = useState(false);
-  const [saving,   setSaving]   = useState(false);
-  const [bizForm,  setBizForm]  = useState(null);   // null = not editing
-  const [tab,      setTab]      = useState("keys"); // keys | business
+  const [newKey, setNewKey] = useState({ provider: "gemini", key: "", label: "" });
+  const [adding, setAdding] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [bizForm, setBizForm] = useState(null);   // null = not editing
+  const [tab, setTab] = useState("keys"); // keys | business
 
   useEffect(() => {
     fetch("/api/keys").then(r => r.json()).then(setKeys);
@@ -51,46 +51,46 @@ export default function Settings() {
   };
 
   return (
-    <div style={{ padding: "32px", maxWidth: "680px" }}>
-      <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: "22px", fontWeight: 700, color: "#0f172a", marginBottom: "4px" }}>Settings</h1>
-      <p style={{ color: "#64748b", fontSize: "14px", marginBottom: "24px" }}>Manage your API keys, business profile and preferences.</p>
+    <div style={{ padding: "48px 40px", maxWidth: "800px", margin: "0 auto" }}>
+      <h1 style={{ fontSize: "32px", marginBottom: "8px" }}>Settings</h1>
+      <p style={{ color: "var(--text-muted)", fontSize: "16px", marginBottom: "40px" }}>Manage your API keys and business profile.</p>
 
       {/* Tab switcher */}
-      <div style={{ display: "flex", gap: "4px", marginBottom: "24px", background: "#f1f5f9", borderRadius: "10px", padding: "4px" }}>
-        {[["keys","🔑 API Keys"],["business","🏢 Business Profile"]].map(([t,l]) => (
+      <div className="glass-card" style={{ display: "flex", gap: "4px", padding: "4px", marginBottom: "40px", borderRadius: "14px" }}>
+        {[["keys", "🔑 API Keys"], ["business", "🏢 Business Profile"]].map(([t, l]) => (
           <button key={t} onClick={() => setTab(t)} style={{
-            flex: 1, padding: "9px", borderRadius: "7px", border: "none", cursor: "pointer",
-            background: tab === t ? "#fff" : "transparent",
-            color: tab === t ? "#1e293b" : "#64748b",
-            fontWeight: tab === t ? 600 : 400, fontSize: "13.5px",
-            boxShadow: tab === t ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
+            flex: 1, padding: "12px", borderRadius: "10px", border: "none", cursor: "pointer",
+            background: tab === t ? "var(--accent-blue)" : "transparent",
+            color: tab === t ? "#fff" : "var(--text-secondary)",
+            fontWeight: 600, fontSize: "14px",
+            transition: "all 0.2s ease",
           }}>{l}</button>
         ))}
       </div>
 
       {tab === "keys" && (
-        <>
-          <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "20px", marginBottom: "16px" }}>
-            <strong style={{ fontFamily: "'Sora', sans-serif", fontSize: "15px", color: "#1e293b" }}>Your API Keys</strong>
-            <p style={{ color: "#64748b", fontSize: "13px", margin: "6px 0 16px" }}>
-              Keys are stored locally in your database. They are never sent anywhere except the respective AI provider.
+        <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+          <div className="glass-card" style={{ padding: "32px" }}>
+            <h3 style={{ fontSize: "18px", marginBottom: "8px" }}>Your API Keys</h3>
+            <p style={{ color: "var(--text-muted)", fontSize: "14px", marginBottom: "24px" }}>
+              Keys are only sent to the AI providers. We never share them.
             </p>
 
             {keys.length === 0 ? (
-              <div style={{ color: "#94a3b8", fontSize: "13.5px", padding: "12px 0" }}>No keys added yet.</div>
+              <div style={{ color: "var(--text-muted)", fontSize: "14px", padding: "12px 0", fontStyle: "italic" }}>No keys added yet.</div>
             ) : (
               keys.map(k => {
                 const p = PROVIDERS.find(p => p.id === k.provider) || {};
                 return (
-                  <div key={k.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid #f1f5f9" }}>
-                    <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-                      <span style={{ fontSize: "20px" }}>{p.icon || "🔑"}</span>
+                  <div key={k.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 0", borderBottom: "1px solid var(--border-glass)" }}>
+                    <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
+                      <span style={{ fontSize: "24px" }}>{p.icon || "🔑"}</span>
                       <div>
-                        <div style={{ fontWeight: 600, fontSize: "13.5px", color: "#1e293b" }}>{p.name || k.provider}{k.label ? ` · ${k.label}` : ""}</div>
-                        <div style={{ fontFamily: "monospace", fontSize: "12px", color: "#94a3b8" }}>{k.key_value}</div>
+                        <div style={{ fontWeight: 600, fontSize: "15px", color: "var(--text-primary)" }}>{p.name || k.provider}{k.label ? ` · ${k.label}` : ""}</div>
+                        <div style={{ fontFamily: "monospace", fontSize: "12px", color: "var(--text-muted)", marginTop: "4px" }}>{k.key_value}</div>
                       </div>
                     </div>
-                    <button onClick={() => deleteKey(k.id)} style={{ background: "#fee2e2", border: "none", borderRadius: "6px", padding: "5px 10px", color: "#991b1b", fontSize: "12px", cursor: "pointer" }}>Remove</button>
+                    <button onClick={() => deleteKey(k.id)} style={{ color: "#ef4444", fontSize: "13px", fontWeight: 600 }}>Remove</button>
                   </div>
                 );
               })
@@ -98,63 +98,71 @@ export default function Settings() {
           </div>
 
           {/* Add key */}
-          <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "20px" }}>
-            <strong style={{ fontFamily: "'Sora', sans-serif", fontSize: "15px", color: "#1e293b" }}>Add a New Key</strong>
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "14px" }}>
-              <div style={{ display: "flex", gap: "10px" }}>
-                <select value={newKey.provider} onChange={e => setNewKey(k => ({...k, provider: e.target.value}))} style={inpSt}>
-                  {PROVIDERS.map(p => <option key={p.id} value={p.id}>{p.icon} {p.name}</option>)}
-                </select>
-                <input value={newKey.label} onChange={e => setNewKey(k => ({...k, label: e.target.value}))} placeholder='Label (e.g. "Key 1")' style={inpSt} />
+          <div className="glass-card" style={{ padding: "32px" }}>
+            <h3 style={{ fontSize: "18px", marginBottom: "24px" }}>Add a New Key</h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                <div>
+                  <label style={labelSt}>Provider</label>
+                  <select value={newKey.provider} onChange={e => setNewKey(k => ({ ...k, provider: e.target.value }))} className="glass-card" style={{ ...inpSt, padding: "12px" }}>
+                    {PROVIDERS.map(p => <option key={p.id} value={p.id} style={{ background: "#1a1a1a" }}>{p.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={labelSt}>Label (Optional)</label>
+                  <input value={newKey.label} onChange={e => setNewKey(k => ({ ...k, label: e.target.value }))} placeholder='e.g. "Main Key"' className="glass-card" style={inpSt} />
+                </div>
               </div>
-              <div style={{ display: "flex", gap: "8px" }}>
-                <input type="password" value={newKey.key} onChange={e => setNewKey(k => ({...k, key: e.target.value}))} placeholder="Paste API key here" style={{ ...inpSt, flex: 1, fontFamily: "monospace" }} />
-                <a href={PROVIDERS.find(p => p.id === newKey.provider)?.getKeyUrl} target="_blank" rel="noreferrer"
-                  style={{ background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe", borderRadius: "8px", padding: "9px 12px", fontSize: "12px", fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" }}>
-                  Get free key →
-                </a>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <label style={labelSt}>API Key</label>
+                <div style={{ display: "flex", gap: "12px" }}>
+                  <input type="password" value={newKey.key} onChange={e => setNewKey(k => ({ ...k, key: e.target.value }))} placeholder="Paste your secret key here" className="glass-card" style={{ ...inpSt, flex: 1, fontFamily: "monospace" }} />
+                  <a href={PROVIDERS.find(p => p.id === newKey.provider)?.getKeyUrl} target="_blank" rel="noreferrer"
+                    className="btn-secondary" style={{ display: "flex", alignItems: "center", textDecoration: "none", fontSize: "13px" }}>
+                    Get Key →
+                  </a>
+                </div>
               </div>
-              <button onClick={addKey} disabled={adding || !newKey.key.trim()} style={{ padding: "11px", background: "#1d4ed8", color: "#fff", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}>
-                {adding ? "Adding…" : "Add Key"}
+              <button onClick={addKey} disabled={adding || !newKey.key.trim()} className="btn-primary" style={{ padding: "14px", marginTop: "8px" }}>
+                {adding ? "Saving..." : "Save API Key"}
               </button>
             </div>
           </div>
-        </>
+        </div>
       )}
 
       {tab === "business" && (
-        <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "20px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-            <strong style={{ fontFamily: "'Sora', sans-serif", fontSize: "15px", color: "#1e293b" }}>Business Profile</strong>
-            {!bizForm && <button onClick={() => setBizForm({...business})} style={{ background: "#eff6ff", color: "#1d4ed8", border: "none", borderRadius: "6px", padding: "6px 12px", fontSize: "13px", cursor: "pointer" }}>✏️ Edit</button>}
+        <div className="glass-card" style={{ padding: "32px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "32px" }}>
+            <h3 style={{ fontSize: "18px", margin: 0 }}>Business Profile</h3>
+            {!bizForm && <button onClick={() => setBizForm({ ...business })} className="btn-secondary" style={{ padding: "8px 16px", fontSize: "13px" }}>✏️ Edit Profile</button>}
           </div>
 
           {bizForm ? (
-            <>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
-                {[["name","Business Name"],["owner_name","Your Name"],["phone","Phone"],["email","Email"],["city","City"],["industry","Industry"]].map(([k,l]) => (
+            <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+                {[["name", "Business Name"], ["owner_name", "Your Name"], ["phone", "Phone Number"], ["email", "Email Address"], ["city", "City"], ["industry", "Industry Type"]].map(([k, l]) => (
                   <div key={k}>
                     <label style={labelSt}>{l}</label>
-                    <input value={bizForm[k] || ""} onChange={e => setBizForm(f => ({...f,[k]:e.target.value}))} style={inpSt} />
+                    <input value={bizForm[k] || ""} onChange={e => setBizForm(f => ({ ...f, [k]: e.target.value }))} className="glass-card" style={inpSt} />
                   </div>
                 ))}
               </div>
-              <div style={{ display: "flex", gap: "8px" }}>
-                <button onClick={saveBusiness} disabled={saving} style={{ padding: "10px 20px", background: "#1d4ed8", color: "#fff", border: "none", borderRadius: "8px", fontSize: "13.5px", fontWeight: 600, cursor: "pointer" }}>
-                  {saving ? "Saving…" : "Save"}
+              <div style={{ display: "flex", gap: "12px", marginTop: "12px" }}>
+                <button onClick={saveBusiness} disabled={saving} className="btn-primary" style={{ flex: 1 }}>
+                  {saving ? "Saving..." : "Save Changes"}
                 </button>
-                <button onClick={() => setBizForm(null)} style={{ padding: "10px 16px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "8px", cursor: "pointer", color: "#475569", fontSize: "13px" }}>Cancel</button>
+                <button onClick={() => setBizForm(null)} className="btn-secondary" style={{ flex: 0.5 }}>Cancel</button>
               </div>
-            </>
+            </div>
           ) : (
-            <div style={{ display: "grid", gap: "8px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "24px" }}>
               {[["🏢", "Business", business.name], ["👤", "Owner", business.owner_name], ["🏭", "Industry", business.industry], ["📍", "City", business.city], ["📞", "Phone", business.phone], ["📧", "Email", business.email]].map(([icon, label, val]) => val ? (
-                <div key={label} style={{ display: "flex", gap: "10px", padding: "8px 0", borderBottom: "1px solid #f1f5f9" }}>
-                  <span>{icon}</span>
-                  <div>
-                    <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</div>
-                    <div style={{ fontSize: "14px", color: "#1e293b" }}>{val}</div>
+                <div key={label} style={{ paddingBottom: "16px", borderBottom: "1px solid var(--border-glass)" }}>
+                  <div style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span>{icon}</span> {label}
                   </div>
+                  <div style={{ fontSize: "16px", color: "var(--text-primary)", fontWeight: 500 }}>{val}</div>
                 </div>
               ) : null)}
             </div>
@@ -162,16 +170,16 @@ export default function Settings() {
         </div>
       )}
 
-      {/* Version info */}
-      <div style={{ marginTop: "24px", padding: "16px", background: "#f8fafc", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
-        <div style={{ fontSize: "12px", color: "#94a3b8" }}>
-          SalesSaathi · Phase 1 · Open Source (MIT) · MCCIA AI Studio<br />
-          DB: {localStorage.getItem("db_type") || "SQLite"} · <a href="https://github.com/mccia-ai-studio/salessaathi" target="_blank" rel="noreferrer" style={{ color: "#3b82f6" }}>GitHub</a>
+      {/* Version info info */}
+      <div style={{ marginTop: "48px", textAlign: "center" }}>
+        <div style={{ fontSize: "11px", color: "var(--text-muted)", lineHeight: 1.8 }}>
+          SalesSaathi v1.0.0 · MIT Licensed · Open Source<br />
+          Built by MCCIA AI Studio · <a href="https://github.com/mccia-ai-studio/salessaathi" target="_blank" rel="noreferrer" style={{ color: "var(--accent-blue)" }}>Source Code on GitHub</a>
         </div>
       </div>
     </div>
   );
 }
 
-const inpSt   = { width: "100%", padding: "9px 11px", border: "1.5px solid #e2e8f0", borderRadius: "8px", fontSize: "13.5px", color: "#1e293b", outline: "none", boxSizing: "border-box", background: "#fff" };
-const labelSt = { display: "block", fontSize: "12px", fontWeight: 600, color: "#374151", marginBottom: "5px" };
+const inpSt = { width: "100%", padding: "14px", fontSize: "15px", color: "var(--text-primary)", outline: "none", boxSizing: "border-box" };
+const labelSt = { display: "block", fontSize: "12px", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.05em" };

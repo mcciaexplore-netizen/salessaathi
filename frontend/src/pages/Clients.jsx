@@ -1,19 +1,19 @@
 import { useEffect, useState } from "react";
 
 const STAGE_COLOR = {
-  "New Lead":    { bg: "#dbeafe", fg: "#1e40af" },
-  "Meeting Done":{ bg: "#fef3c7", fg: "#92400e" },
-  "Proposal":    { bg: "#ede9fe", fg: "#5b21b6" },
-  "Negotiation": { bg: "#ffedd5", fg: "#9a3412" },
-  "Closed Won":  { bg: "#d1fae5", fg: "#065f46" },
-  "Closed Lost": { bg: "#fee2e2", fg: "#991b1b" },
+  "New Lead": { bg: "rgba(59, 130, 246, 0.15)", fg: "#3b82f6" },
+  "Meeting Done": { bg: "rgba(245, 158, 11, 0.15)", fg: "#f59e0b" },
+  "Proposal": { bg: "rgba(139, 92, 246, 0.15)", fg: "#a78bfa" },
+  "Negotiation": { bg: "rgba(249, 115, 22, 0.15)", fg: "#fb923c" },
+  "Closed Won": { bg: "rgba(16, 185, 129, 0.15)", fg: "#34d399" },
+  "Closed Lost": { bg: "rgba(239, 68, 68, 0.15)", fg: "#fca5a5" },
 };
 const TEMP_ICON = { hot: "🔥", warm: "🌤", cold: "❄️" };
 
 export default function Clients({ navigate }) {
-  const [clients, setClients]   = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [query,   setQuery]     = useState("");
+  const [clients, setClients] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
 
   useEffect(() => { load(); }, []);
 
@@ -33,73 +33,80 @@ export default function Clients({ navigate }) {
   };
 
   return (
-    <div style={{ padding: "32px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "24px" }}>
+    <div style={{ padding: "48px 40px", maxWidth: "1000px", margin: "0 auto" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "32px" }}>
         <div>
-          <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: "22px", fontWeight: 700, color: "#0f172a", margin: 0 }}>Clients</h1>
-          <p style={{ color: "#64748b", fontSize: "14px", margin: "4px 0 0" }}>{clients.length} client{clients.length !== 1 ? "s" : ""}</p>
+          <h1 style={{ fontSize: "32px", margin: 0 }}>Clients</h1>
+          <p style={{ color: "var(--text-muted)", fontSize: "15px", marginTop: "4px" }}>
+            {clients.length} registered client{clients.length !== 1 ? "s" : ""}
+          </p>
         </div>
-        <button onClick={() => navigate("log-meeting")} style={{
-          background: "linear-gradient(135deg, #1d4ed8, #3b82f6)", color: "#fff",
-          border: "none", borderRadius: "10px", padding: "10px 18px",
-          fontSize: "13.5px", fontWeight: 600, cursor: "pointer",
-        }}>📸 Log Meeting</button>
+        <button onClick={() => navigate("log-meeting")} className="btn-primary">
+          📸 Log New Meeting
+        </button>
       </div>
 
       {/* Search */}
-      <div style={{ position: "relative", marginBottom: "20px" }}>
-        <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }}>🔍</span>
+      <div style={{ position: "relative", marginBottom: "32px" }}>
+        <span style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", fontSize: "18px" }}>🔍</span>
         <input
           value={query}
           onChange={e => handleSearch(e.target.value)}
-          placeholder="Search by name, company or phone…"
-          style={{ width: "100%", padding: "10px 12px 10px 36px", border: "1.5px solid #e2e8f0", borderRadius: "10px", fontSize: "14px", outline: "none", boxSizing: "border-box" }}
+          placeholder="Search by name, company or phone..."
+          className="glass-card"
+          style={{ width: "100%", padding: "14px 16px 14px 48px", fontSize: "15px", outline: "none", boxSizing: "border-box", borderRadius: "14px" }}
         />
       </div>
 
       {loading ? (
-        <div style={{ color: "#94a3b8", fontSize: "14px" }}>Loading…</div>
+        <div style={{ color: "var(--text-muted)", fontSize: "15px" }}>Searching...</div>
       ) : clients.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "60px 0", color: "#94a3b8" }}>
-          {query ? "No clients match your search." : "No clients yet. Log your first meeting to add one."}
+        <div className="glass-card" style={{ textAlign: "center", padding: "80px 20px" }}>
+          <div style={{ fontSize: "40px", marginBottom: "16px", opacity: 0.5 }}>👥</div>
+          <div style={{ color: "var(--text-primary)", fontWeight: 600, fontSize: "18px" }}>
+            {query ? "No matches found" : "No clients in your database"}
+          </div>
+          <div style={{ color: "var(--text-muted)", fontSize: "15px", marginTop: "8px" }}>
+            {query ? "Try searching for something else." : "Log your first meeting to populate your client list automatically."}
+          </div>
         </div>
       ) : (
-        <div style={{ display: "grid", gap: "12px" }}>
+        <div style={{ display: "grid", gap: "16px" }}>
           {clients.map(c => {
             const sc = STAGE_COLOR[c.deal_stage] || STAGE_COLOR["New Lead"];
             return (
               <div key={c.id}
                 onClick={() => navigate("client-detail", { clientId: c.id })}
+                className="glass-card"
                 style={{
-                  background: "#fff", border: "1px solid #e2e8f0", borderRadius: "12px",
-                  padding: "16px 20px", cursor: "pointer", display: "flex",
+                  padding: "20px 24px", cursor: "pointer", display: "flex",
                   justifyContent: "space-between", alignItems: "center",
-                  transition: "box-shadow 0.15s",
                 }}>
-                <div style={{ display: "flex", gap: "14px", alignItems: "center" }}>
+                <div style={{ display: "flex", gap: "20px", alignItems: "center" }}>
                   <div style={{
-                    width: 44, height: 44, borderRadius: "12px",
-                    background: "linear-gradient(135deg, #1e3a8a, #1d4ed8)",
-                    color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
-                    fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: "16px",
+                    width: 48, height: 48, borderRadius: "14px",
+                    background: "rgba(59, 130, 246, 0.1)",
+                    color: "var(--accent-blue)", display: "flex", alignItems: "center", justifyContent: "center",
+                    fontWeight: 800, fontSize: "18px", border: "1px solid rgba(59, 130, 246, 0.2)"
                   }}>
                     {(c.name || "?")[0].toUpperCase()}
                   </div>
                   <div>
-                    <div style={{ fontWeight: 600, fontSize: "15px", color: "#0f172a" }}>
+                    <div style={{ fontWeight: 600, fontSize: "17px", color: "var(--text-primary)" }}>
                       {c.name} {TEMP_ICON[c.deal_temp]}
                     </div>
-                    <div style={{ fontSize: "13px", color: "#64748b", marginTop: "2px" }}>
-                      {c.company || "—"}{c.phone ? ` · ${c.phone}` : ""}
+                    <div style={{ fontSize: "14px", color: "var(--text-muted)", marginTop: "4px" }}>
+                      <span style={{ color: "var(--text-secondary)" }}>{c.company || "No Company"}</span>
+                      {c.phone ? ` · ${c.phone}` : ""}
                     </div>
                   </div>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
                   <span style={{
-                    fontSize: "11px", fontWeight: 600, padding: "4px 10px", borderRadius: "999px",
-                    background: sc.bg, color: sc.fg,
+                    fontSize: "11px", fontWeight: 700, padding: "5px 12px", borderRadius: "999px",
+                    background: sc.bg, color: sc.fg, textTransform: "uppercase", letterSpacing: "0.05em"
                   }}>{c.deal_stage}</span>
-                  <span style={{ color: "#94a3b8", fontSize: "16px" }}>›</span>
+                  <span style={{ color: "var(--border-glass)", fontSize: "20px" }}>›</span>
                 </div>
               </div>
             );

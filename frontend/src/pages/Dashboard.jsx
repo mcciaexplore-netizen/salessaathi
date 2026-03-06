@@ -1,19 +1,20 @@
 import { useEffect, useState } from "react";
 
 const TEMP_COLOR = { hot: "#ef4444", warm: "#f59e0b", cold: "#3b82f6" };
-const TEMP_BG    = { hot: "#fee2e2", warm: "#fef3c7", cold: "#dbeafe" };
+const TEMP_BG = { hot: "rgba(239, 68, 68, 0.15)", warm: "rgba(245, 158, 11, 0.15)", cold: "rgba(59, 130, 246, 0.15)" };
 
 function StatCard({ icon, label, value, color, onClick }) {
   return (
-    <div onClick={onClick} style={{
-      background: "#fff", border: "1px solid #e2e8f0", borderRadius: "12px",
-      padding: "20px", cursor: onClick ? "pointer" : "default",
-      borderTop: `4px solid ${color}`,
-      flex: 1,
+    <div onClick={onClick} className="glass-card" style={{
+      padding: "24px", cursor: onClick ? "pointer" : "default",
+      flex: 1, minWidth: "200px",
+      display: "flex", flexDirection: "column", gap: "12px",
     }}>
-      <div style={{ fontSize: "24px", marginBottom: "8px" }}>{icon}</div>
-      <div style={{ fontSize: "28px", fontWeight: 700, color: "#0f172a", fontFamily: "'Sora', sans-serif" }}>{value}</div>
-      <div style={{ fontSize: "13px", color: "#64748b", marginTop: "4px" }}>{label}</div>
+      <div style={{ fontSize: "14px", color: "var(--text-muted)", fontWeight: 500 }}>{label}</div>
+      <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
+        <div style={{ fontSize: "32px", fontWeight: 800, color: "var(--text-primary)", fontFamily: "'Sora', sans-serif" }}>{value}</div>
+        <div style={{ fontSize: "14px", color }}>{icon}</div>
+      </div>
     </div>
   );
 }
@@ -22,27 +23,28 @@ function MeetingRow({ m, navigate }) {
   return (
     <div style={{
       display: "flex", justifyContent: "space-between", alignItems: "center",
-      padding: "12px 0", borderBottom: "1px solid #f1f5f9",
+      padding: "16px 0", borderBottom: "1px solid var(--border-glass)",
     }}>
       <div>
-        <div style={{ fontWeight: 600, fontSize: "14px", color: "#1e293b" }}>
+        <div style={{ fontWeight: 600, fontSize: "15px", color: "var(--text-primary)" }}>
           {m.client_name || "Unknown Client"}
-          {m.client_company && <span style={{ fontWeight: 400, color: "#64748b" }}> · {m.client_company}</span>}
+          {m.client_company && <span style={{ fontWeight: 400, color: "var(--text-muted)" }}> · {m.client_company}</span>}
         </div>
-        <div style={{ fontSize: "12px", color: "#94a3b8", marginTop: "2px" }}>
+        <div style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "4px" }}>
           {m.meeting_date} {m.follow_up_date && `· Follow-up: ${m.follow_up_date}`}
         </div>
       </div>
-      <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+      <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
         <span style={{
-          fontSize: "11px", fontWeight: 600, padding: "3px 10px", borderRadius: "999px",
-          background: TEMP_BG[m.deal_temp] || "#f1f5f9",
-          color: TEMP_COLOR[m.deal_temp] || "#475569",
-          textTransform: "capitalize",
+          fontSize: "11px", fontWeight: 700, padding: "4px 12px", borderRadius: "99px",
+          background: TEMP_BG[m.deal_temp] || "var(--bg-glass)",
+          color: TEMP_COLOR[m.deal_temp] || "var(--text-muted)",
+          textTransform: "uppercase", letterSpacing: "0.05em"
         }}>{m.deal_temp || "warm"}</span>
         {m.client_id && (
           <button onClick={() => navigate("client-detail", { clientId: m.client_id })}
-            style={{ background: "#eff6ff", border: "none", borderRadius: "6px", padding: "4px 10px", fontSize: "12px", color: "#1d4ed8", cursor: "pointer" }}>
+            className="btn-secondary"
+            style={{ padding: "6px 12px", fontSize: "12px" }}>
             View →
           </button>
         )}
@@ -52,7 +54,7 @@ function MeetingRow({ m, navigate }) {
 }
 
 export default function Dashboard({ navigate }) {
-  const [data,    setData]    = useState(null);
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const load = () => {
@@ -65,89 +67,85 @@ export default function Dashboard({ navigate }) {
 
   useEffect(() => { load(); }, []);
 
-  const today = new Date().toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  const todayStr = new Date().toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
 
   return (
-    <div style={{ padding: "32px" }}>
+    <div style={{ padding: "48px 40px", maxWidth: "1200px", margin: "0 auto" }}>
       {/* Header */}
-      <div style={{ marginBottom: "28px" }}>
-        <div style={{ fontSize: "12px", color: "#94a3b8", marginBottom: "4px" }}>{today}</div>
-        <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: "24px", fontWeight: 700, color: "#0f172a", margin: 0 }}>
+      <div style={{ marginBottom: "40px" }}>
+        <div style={{ fontSize: "13px", color: "var(--accent-blue)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "8px" }}>{todayStr}</div>
+        <h1 style={{ fontSize: "36px", margin: 0 }}>
           Good {getGreeting()} 👋
         </h1>
-        <p style={{ color: "#64748b", fontSize: "14px", margin: "4px 0 0" }}>Here's your sales overview for today.</p>
+        <p style={{ color: "var(--text-muted)", fontSize: "16px", marginTop: "8px" }}>Here's what's happening in your sales pipeline today.</p>
       </div>
 
       {loading ? (
-        <div style={{ color: "#94a3b8", fontSize: "14px" }}>Loading…</div>
+        <div style={{ color: "var(--text-muted)", fontSize: "16px" }}>Loading your data...</div>
       ) : !data ? (
-        <div style={{ color: "#ef4444", fontSize: "14px" }}>Could not load dashboard. Is the backend running?</div>
+        <div className="glass-card" style={{ padding: "24px", color: "#ef4444", borderColor: "#ef4444" }}>Could not load dashboard. Is the backend running?</div>
       ) : (
         <>
           {/* Stat cards */}
-          <div style={{ display: "flex", gap: "16px", marginBottom: "28px", flexWrap: "wrap" }}>
-            <StatCard icon="🔴" label="Overdue follow-ups"  value={data.overdue_follow_ups} color="#ef4444" />
-            <StatCard icon="📅" label="Due today"           value={data.due_today}          color="#f59e0b" />
-            <StatCard icon="🔥" label="Hot deals"           value={data.hot_deals}          color="#10b981" onClick={() => navigate("pipeline")} />
-            <StatCard icon="👥" label="Total clients"       value={data.total_clients}      color="#3b82f6" onClick={() => navigate("clients")} />
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "20px", marginBottom: "40px" }}>
+            <StatCard icon="⌛" label="Overdue follow-ups" value={data.overdue_follow_ups} color="#ef4444" />
+            <StatCard icon="🎯" label="Due today" value={data.due_today} color="#f59e0b" />
+            <StatCard icon="🔥" label="Hot deals" value={data.hot_deals} color="#10b981" onClick={() => navigate("pipeline")} />
+            <StatCard icon="📈" label="Total clients" value={data.total_clients} color="#3b82f6" onClick={() => navigate("clients")} />
           </div>
 
           {/* Empty state */}
           {data.total_clients === 0 && (
-            <div style={{
-              background: "linear-gradient(135deg, #eff6ff, #dbeafe)",
-              border: "1px solid #bfdbfe", borderRadius: "16px",
-              padding: "40px", textAlign: "center", marginBottom: "24px",
+            <div className="glass-card" style={{
+              padding: "64px 40px", textAlign: "center", marginBottom: "40px",
+              background: "linear-gradient(135deg, rgba(59, 130, 246, 0.1), transparent)",
             }}>
-              <div style={{ fontSize: "48px", marginBottom: "16px" }}>📸</div>
-              <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: "20px", color: "#1e3a8a", marginBottom: "8px" }}>
+              <div style={{ fontSize: "64px", marginBottom: "24px" }}>🎙️</div>
+              <h2 style={{ fontSize: "28px", color: "var(--text-primary)", marginBottom: "12px" }}>
                 Log your first meeting
               </h2>
-              <p style={{ color: "#3b82f6", fontSize: "14px", marginBottom: "20px" }}>
-                Take a photo of your handwritten meeting notes. AI will extract everything in seconds.
+              <p style={{ color: "var(--text-muted)", fontSize: "17px", marginBottom: "32px", maxWidth: "500px", margin: "0 auto 32px" }}>
+                Upload a photo of your handwritten notes or record audio. SalesSaathi's AI handles the extraction automatically.
               </p>
-              <button onClick={() => navigate("log-meeting")} style={{
-                background: "linear-gradient(135deg, #1d4ed8, #3b82f6)",
-                color: "#fff", border: "none", borderRadius: "10px",
-                padding: "12px 28px", fontSize: "14px", fontWeight: 600, cursor: "pointer",
-              }}>
-                📸 Upload meeting notes →
+              <button onClick={() => navigate("log-meeting")} className="btn-primary" style={{ padding: "14px 32px", fontSize: "16px" }}>
+                📸 Get Started →
               </button>
             </div>
           )}
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: "24px" }}>
             {/* Recent meetings */}
-            <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "20px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-                <h3 style={{ fontFamily: "'Sora', sans-serif", fontSize: "15px", fontWeight: 600, color: "#0f172a", margin: 0 }}>Recent Meetings</h3>
-                <button onClick={() => navigate("clients")} style={{ background: "none", border: "none", color: "#3b82f6", fontSize: "12px", cursor: "pointer" }}>View all →</button>
+            <div className="glass-card" style={{ padding: "32px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+                <h3 style={{ fontSize: "18px", margin: 0 }}>Recent Meetings</h3>
+                <button onClick={() => navigate("clients")} style={{ color: "var(--accent-blue)", fontSize: "13px", fontWeight: 600 }}>View All</button>
               </div>
               {(data.recent_meetings || []).length === 0 ? (
-                <div style={{ color: "#94a3b8", fontSize: "13px", padding: "16px 0" }}>No meetings yet.</div>
+                <div style={{ color: "var(--text-muted)", fontSize: "14px", padding: "20px 0" }}>No meetings logged yet.</div>
               ) : (
                 (data.recent_meetings || []).map((m, i) => <MeetingRow key={i} m={m} navigate={navigate} />)
               )}
             </div>
 
             {/* Upcoming follow-ups */}
-            <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "20px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-                <h3 style={{ fontFamily: "'Sora', sans-serif", fontSize: "15px", fontWeight: 600, color: "#0f172a", margin: 0 }}>Upcoming Follow-ups</h3>
+            <div className="glass-card" style={{ padding: "32px" }}>
+              <div style={{ marginBottom: "24px" }}>
+                <h3 style={{ fontSize: "18px", margin: 0 }}>Upcoming Follow-ups</h3>
               </div>
               {(data.upcoming_follow_ups || []).length === 0 ? (
-                <div style={{ color: "#94a3b8", fontSize: "13px", padding: "16px 0" }}>No upcoming follow-ups.</div>
+                <div style={{ color: "var(--text-muted)", fontSize: "14px", padding: "20px 0" }}>No upcoming follow-ups found.</div>
               ) : (
                 (data.upcoming_follow_ups || []).map((m, i) => (
-                  <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid #f1f5f9" }}>
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "16px 0", borderBottom: "1px solid var(--border-glass)" }}>
                     <div>
-                      <div style={{ fontWeight: 600, fontSize: "13.5px", color: "#1e293b" }}>{m.client_name}</div>
-                      <div style={{ fontSize: "12px", color: "#94a3b8" }}>{m.follow_up_date}</div>
+                      <div style={{ fontWeight: 600, fontSize: "15px", color: "var(--text-primary)" }}>{m.client_name}</div>
+                      <div style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "4px" }}>{m.follow_up_date}</div>
                     </div>
                     <span style={{
-                      fontSize: "11px", fontWeight: 600, padding: "3px 8px", borderRadius: "999px",
-                      background: isToday(m.follow_up_date) ? "#fef3c7" : "#f1f5f9",
-                      color: isToday(m.follow_up_date) ? "#92400e" : "#475569",
+                      fontSize: "11px", fontWeight: 700, padding: "4px 12px", borderRadius: "99px",
+                      background: isToday(m.follow_up_date) ? "rgba(245, 158, 11, 0.2)" : "var(--bg-glass)",
+                      color: isToday(m.follow_up_date) ? "#f59e0b" : "var(--text-muted)",
+                      textTransform: "uppercase"
                     }}>
                       {isToday(m.follow_up_date) ? "Today" : daysUntil(m.follow_up_date)}
                     </span>
@@ -164,9 +162,9 @@ export default function Dashboard({ navigate }) {
 
 function getGreeting() {
   const h = new Date().getHours();
-  if (h < 12) return "morning";
-  if (h < 17) return "afternoon";
-  return "evening";
+  if (h < 12) return "Morning";
+  if (h < 17) return "Afternoon";
+  return "Evening";
 }
 
 function isToday(dateStr) {
