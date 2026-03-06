@@ -8,7 +8,7 @@ const STAGE_COLOR = {
   "Closed Won": { bg: "rgba(16, 185, 129, 0.15)", fg: "#34d399" },
   "Closed Lost": { bg: "rgba(239, 68, 68, 0.15)", fg: "#fca5a5" },
 };
-const TEMP_ICON = { hot: "🔥", warm: "🌤", cold: "❄️" };
+const TEMP_ICON = { hot: "", warm: "", cold: "" };
 
 export default function Clients({ navigate }) {
   const [clients, setClients] = useState([]);
@@ -42,19 +42,18 @@ export default function Clients({ navigate }) {
           </p>
         </div>
         <button onClick={() => navigate("log-meeting")} className="btn-primary">
-          📸 Log New Meeting
+          Log New Meeting
         </button>
       </div>
 
       {/* Search */}
       <div style={{ position: "relative", marginBottom: "32px" }}>
-        <span style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", fontSize: "18px" }}>🔍</span>
         <input
           value={query}
           onChange={e => handleSearch(e.target.value)}
           placeholder="Search by name, company or phone..."
           className="glass-card"
-          style={{ width: "100%", padding: "14px 16px 14px 48px", fontSize: "15px", outline: "none", boxSizing: "border-box", borderRadius: "14px" }}
+          style={{ width: "100%", padding: "14px 16px 14px 24px", fontSize: "15px", outline: "none", boxSizing: "border-box", borderRadius: "14px" }}
         />
       </div>
 
@@ -62,7 +61,6 @@ export default function Clients({ navigate }) {
         <div style={{ color: "var(--text-muted)", fontSize: "15px" }}>Searching...</div>
       ) : clients.length === 0 ? (
         <div className="glass-card" style={{ textAlign: "center", padding: "80px 20px" }}>
-          <div style={{ fontSize: "40px", marginBottom: "16px", opacity: 0.5 }}>👥</div>
           <div style={{ color: "var(--text-primary)", fontWeight: 600, fontSize: "18px" }}>
             {query ? "No matches found" : "No clients in your database"}
           </div>

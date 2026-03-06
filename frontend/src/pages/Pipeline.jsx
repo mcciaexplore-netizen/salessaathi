@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 
 const STAGES = [
-  { id: "New Lead", color: "#3b82f6", bg: "rgba(59, 130, 246, 0.1)" },
-  { id: "Meeting Done", color: "#f59e0b", bg: "rgba(245, 158, 11, 0.1)" },
-  { id: "Proposal", color: "#a78bfa", bg: "rgba(167, 139, 250, 0.1)" },
-  { id: "Negotiation", color: "#fb923c", bg: "rgba(251, 146, 60, 0.1)" },
-  { id: "Closed Won", color: "#34d399", bg: "rgba(52, 211, 153, 0.1)" },
-  { id: "Closed Lost", color: "#fca5a5", bg: "rgba(252, 165, 165, 0.1)" },
+  { id: "New Lead", color: "#3b82f6", bg: "#eff6ff" },
+  { id: "Meeting Done", color: "#f59e0b", bg: "#fffbeb" },
+  { id: "Proposal", color: "#8b5cf6", bg: "#f5f3ff" },
+  { id: "Negotiation", color: "#f97316", bg: "#fff7ed" },
+  { id: "Closed Won", color: "#10b981", bg: "#ecfdf5" },
+  { id: "Closed Lost", color: "#ef4444", bg: "#fef2f2" },
 ];
-const TEMP_ICON = { hot: "🔥", warm: "🌤", cold: "❄️" };
+const TEMP_ICON = { hot: "", warm: "", cold: "" };
 
 export default function Pipeline({ navigate }) {
   const [clients, setClients] = useState([]);
@@ -25,62 +25,73 @@ export default function Pipeline({ navigate }) {
   const active = clients.filter(c => !c.deal_stage?.startsWith("Closed")).length;
 
   return (
-    <div style={{ padding: "48px 40px", maxWidth: "1400px", margin: "0 auto" }}>
-      <div style={{ marginBottom: "32px" }}>
-        <h1 style={{ fontSize: "32px", margin: 0 }}>Pipeline</h1>
-        <p style={{ color: "var(--text-muted)", fontSize: "15px", marginTop: "4px" }}>
-          {active} active deal{active !== 1 ? "s" : ""} across {clients.length} client{clients.length !== 1 ? "s" : ""}
+    <div style={{ padding: "60px 48px", maxWidth: "1600px", margin: "0 auto" }}>
+      <div style={{ marginBottom: "40px" }}>
+        <h1 style={{ fontSize: "32px", margin: 0, color: "var(--text-primary)" }}>Sales Pipeline</h1>
+        <p style={{ color: "var(--text-secondary)", fontSize: "16px", marginTop: "8px" }}>
+          Track {active} active deals across {clients.length} potential clients.
         </p>
       </div>
 
       {loading ? (
-        <div style={{ color: "var(--text-muted)", fontSize: "15px" }}>Loading pipeline...</div>
+        <div style={{ color: "var(--text-secondary)", fontSize: "16px", padding: "40px", textAlign: "center" }}>Loading pipeline...</div>
       ) : clients.length === 0 ? (
-        <div className="glass-card" style={{ textAlign: "center", padding: "80px 20px" }}>
-          No clients found. Log a meeting to populate your sales pipeline.
+        <div className="card-panel" style={{ textAlign: "center", padding: "80px 40px", background: "white" }}>
+          <h2 style={{ fontSize: "20px", marginBottom: "12px" }}>Your pipeline is empty</h2>
+          <p style={{ color: "var(--text-secondary)", marginBottom: "24px" }}>Log a meeting to see your sales pipeline in action.</p>
+          <button onClick={() => navigate("log-meeting")} className="btn-primary">Log First Meeting</button>
         </div>
       ) : (
-        <div style={{ display: "flex", gap: "20px", overflowX: "auto", paddingBottom: "24px" }}>
+        <div style={{ display: "flex", gap: "24px", overflowX: "auto", paddingBottom: "32px", alignItems: "flex-start" }}>
           {STAGES.map(s => {
             const group = byStage[s.id] || [];
             return (
-              <div key={s.id} style={{ minWidth: "260px", flex: "0 0 260px" }}>
+              <div key={s.id} style={{ minWidth: "280px", flex: "0 0 280px" }}>
                 {/* Column header */}
                 <div style={{
-                  background: s.bg, borderRadius: "14px",
-                  padding: "16px 20px", marginBottom: "16px",
+                  background: s.bg, borderRadius: "12px",
+                  padding: "16px 20px", marginBottom: "20px",
                   display: "flex", justifyContent: "space-between", alignItems: "center",
-                  border: `1px solid ${s.color}33`,
+                  border: `1px solid ${s.color}22`,
                 }}>
-                  <span style={{ fontSize: "12px", fontWeight: 800, color: s.color, textTransform: "uppercase", letterSpacing: "0.05em" }}>{s.id}</span>
-                  <span style={{ fontSize: "20px", fontWeight: 800, color: s.color }}>{group.length}</span>
+                  <span style={{ fontSize: "12px", fontWeight: 700, color: s.color, textTransform: "uppercase", letterSpacing: "0.05em" }}>{s.id}</span>
+                  <span style={{
+                    fontSize: "12px", fontWeight: 700, color: "white",
+                    background: s.color, width: "24px", height: "24px",
+                    borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center"
+                  }}>{group.length}</span>
                 </div>
 
                 {/* Cards */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                   {group.map(c => (
                     <div key={c.id}
                       onClick={() => navigate("client-detail", { clientId: c.id })}
-                      className="glass-card"
+                      className="card-panel"
                       style={{
-                        padding: "16px 18px", cursor: "pointer",
+                        padding: "20px", cursor: "pointer",
+                        background: "white",
                         borderLeft: `4px solid ${s.color}`,
-                        borderRadius: "12px",
+                        border: "1px solid var(--border-light)",
+                        borderLeftWidth: "4px"
                       }}>
-                      <div style={{ fontWeight: 600, fontSize: "15px", color: "var(--text-primary)", marginBottom: "4px" }}>
+                      <div style={{ fontWeight: 600, fontSize: "15px", color: "var(--text-primary)", marginBottom: "6px" }}>
                         {c.name} {TEMP_ICON[c.deal_temp]}
                       </div>
-                      {c.company && <div style={{ fontSize: "13px", color: "var(--text-secondary)" }}>{c.company}</div>}
-                      {c.city && <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "8px" }}>📍 {c.city}</div>}
+                      {c.company && <div style={{ fontSize: "13px", color: "var(--text-secondary)", marginBottom: "8px" }}>{c.company}</div>}
+                      {c.city && <div style={{ fontSize: "12px", color: "var(--text-muted)", display: "flex", alignItems: "center", gap: "4px" }}>
+                        {c.city}
+                      </div>}
                     </div>
                   ))}
                   {group.length === 0 && (
                     <div style={{
-                      padding: "32px 0", textAlign: "center",
+                      padding: "40px 0", textAlign: "center",
                       color: "var(--text-muted)", fontSize: "13px",
-                      border: "1px dashed var(--border-glass)", borderRadius: "12px"
+                      border: "2px dashed var(--border-light)", borderRadius: "12px",
+                      background: "rgba(255,255,255,0.5)"
                     }}>
-                      No cards
+                      Drop items here
                     </div>
                   )}
                 </div>

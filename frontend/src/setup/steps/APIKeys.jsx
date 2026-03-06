@@ -4,7 +4,7 @@ const PROVIDERS = [
   {
     id: "gemini",
     name: "Google Gemini",
-    icon: "🔷",
+    icon: "",
     free: "15 requests/min free — no credit card",
     getKeyUrl: "https://aistudio.google.com/app/apikey",
     recommended: true,
@@ -12,14 +12,14 @@ const PROVIDERS = [
   {
     id: "groq",
     name: "Groq",
-    icon: "⚡",
+    icon: "",
     free: "Free tier — extremely fast responses",
     getKeyUrl: "https://console.groq.com/keys",
   },
   {
     id: "openai",
     name: "OpenAI (GPT-4)",
-    icon: "🟢",
+    icon: "",
     free: "Paid — $5 free credits for new accounts",
     getKeyUrl: "https://platform.openai.com/api-keys",
   },
@@ -107,7 +107,7 @@ export default function APIKeys({ value, onChange, onNext, onBack, saving }) {
                   onChange={e => updateKey(idx, "provider", e.target.value)}
                   style={{ ...inputStyle, flex: "0 0 140px" }}
                 >
-                  {PROVIDERS.map(p => <option key={p.id} value={p.id}>{p.icon} {p.name}</option>)}
+                  {PROVIDERS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
                 <input
                   value={k.label}
@@ -119,7 +119,7 @@ export default function APIKeys({ value, onChange, onNext, onBack, saving }) {
                   <button onClick={() => removeKey(idx)} style={{
                     background: "#fee2e2", border: "none", borderRadius: "8px",
                     width: "36px", cursor: "pointer", color: "#991b1b", fontSize: "14px",
-                  }}>✕</button>
+                  }}>Remove</button>
                 )}
               </div>
               <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
@@ -135,7 +135,7 @@ export default function APIKeys({ value, onChange, onNext, onBack, saving }) {
                   borderRadius: "8px", padding: "9px 12px", fontSize: "12px",
                   fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap",
                 }}>
-                  Get key →
+                  Get key
                 </a>
               </div>
             </div>
@@ -152,22 +152,22 @@ export default function APIKeys({ value, onChange, onNext, onBack, saving }) {
       {error && <ErrorBox msg={error} />}
 
       <button onClick={handleNext} disabled={saving} style={{ ...btnPrimary, marginBottom: "8px" }}>
-        {saving ? "Saving setup…" : "Finish setup →"}
+        {saving ? "Saving setup…" : "Finish setup"}
       </button>
       <button onClick={handleSkip} style={btnLink}>
         Skip for now — I'll add a key later
       </button>
-    </div>
+    </div >
   );
 }
 
-const BackBtn    = ({ onClick }) => <button onClick={onClick} style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b", fontSize: "13px", padding: "0 0 16px", display: "flex", alignItems: "center", gap: "4px" }}>← Back</button>;
-const StepLabel  = ({ children }) => <div style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.1em", color: "#3b82f6", fontWeight: 600, marginBottom: "6px" }}>{children}</div>;
-const ErrorBox   = ({ msg }) => <div style={{ background: "#fee2e2", borderRadius: "8px", padding: "12px 14px", marginBottom: "16px", color: "#991b1b", fontSize: "13px" }}>{msg}</div>;
+const BackBtn = ({ onClick }) => <button onClick={onClick} style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b", fontSize: "13px", padding: "0 0 16px", display: "flex", alignItems: "center", gap: "4px" }}>Back</button>;
+const StepLabel = ({ children }) => <div style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.1em", color: "#3b82f6", fontWeight: 600, marginBottom: "6px" }}>{children}</div>;
+const ErrorBox = ({ msg }) => <div style={{ background: "#fee2e2", borderRadius: "8px", padding: "12px 14px", marginBottom: "16px", color: "#991b1b", fontSize: "13px" }}>{msg}</div>;
 
-const h2         = { fontFamily: "'Sora', sans-serif", fontSize: "20px", fontWeight: 700, color: "#0f172a", marginBottom: "4px" };
-const subtext    = { fontSize: "13.5px", color: "#64748b", lineHeight: 1.6 };
+const h2 = { fontFamily: "'Sora', sans-serif", fontSize: "20px", fontWeight: 700, color: "#0f172a", marginBottom: "4px" };
+const subtext = { fontSize: "13.5px", color: "#64748b", lineHeight: 1.6 };
 const inputStyle = { width: "100%", padding: "10px 12px", border: "1.5px solid #e2e8f0", borderRadius: "8px", fontSize: "13.5px", color: "#1e293b", outline: "none", background: "#fff" };
 const btnPrimary = { width: "100%", padding: "14px", background: "#1d4ed8", color: "#fff", border: "none", borderRadius: "10px", fontSize: "15px", fontWeight: 600, cursor: "pointer" };
 const btnSecondary = { width: "100%", padding: "11px", background: "#f8fafc", color: "#475569", border: "1px solid #e2e8f0", borderRadius: "10px", fontSize: "14px", fontWeight: 500, cursor: "pointer" };
-const btnLink    = { width: "100%", padding: "10px", background: "none", color: "#64748b", border: "none", cursor: "pointer", fontSize: "13px" };
+const btnLink = { width: "100%", padding: "10px", background: "none", color: "#64748b", border: "none", cursor: "pointer", fontSize: "13px" };

@@ -1,18 +1,18 @@
 import { useState } from "react";
-import Welcome       from "./steps/Welcome.jsx";
-import DBPicker      from "./steps/DBPicker.jsx";
-import SQLiteSetup   from "./steps/SQLiteSetup.jsx";
+import Welcome from "./steps/Welcome.jsx";
+import DBPicker from "./steps/DBPicker.jsx";
+import SQLiteSetup from "./steps/SQLiteSetup.jsx";
 import PocketBaseSetup from "./steps/PocketBaseSetup.jsx";
 import BusinessProfile from "./steps/BusinessProfile.jsx";
-import APIKeys       from "./steps/APIKeys.jsx";
-import Done          from "./steps/Done.jsx";
+import APIKeys from "./steps/APIKeys.jsx";
+import Done from "./steps/Done.jsx";
 
 const STEPS = ["welcome", "db-pick", "db-config", "business", "api-keys", "done"];
 
 function ProgressBar({ current }) {
   // don't count welcome & done in the visual bar
   const bars = ["db-pick", "db-config", "business", "api-keys"];
-  const idx  = bars.indexOf(current);
+  const idx = bars.indexOf(current);
   if (idx === -1) return null;
   return (
     <div style={{ display: "flex", gap: "6px", padding: "0 32px", marginBottom: "8px" }}>
@@ -30,13 +30,13 @@ function ProgressBar({ current }) {
 export default function SetupWizard({ onComplete }) {
   const [step, setStep] = useState("welcome");
   const [state, setState] = useState({
-    db_type:   "sqlite",
+    db_type: "sqlite",
     db_config: {},
-    business:  {},
-    api_keys:  [],
+    business: {},
+    api_keys: [],
   });
   const [saving, setSaving] = useState(false);
-  const [error,  setError]  = useState("");
+  const [error, setError] = useState("");
 
   const update = (patch) => setState(s => ({ ...s, ...patch }));
 
@@ -85,8 +85,8 @@ export default function SetupWizard({ onComplete }) {
           width: 40, height: 40, borderRadius: "10px",
           background: "linear-gradient(135deg, #1e3a8a, #1d4ed8)",
           display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: "20px",
-        }}>📋</div>
+          fontSize: "20px", color: "white"
+        }}>S</div>
         <div>
           <div style={{
             fontFamily: "'Sora', sans-serif", fontWeight: 700,
@@ -109,17 +109,17 @@ export default function SetupWizard({ onComplete }) {
         boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
         overflow: "hidden",
       }}>
-        {step === "welcome"   && <Welcome   onNext={() => next("db-pick")} />}
-        {step === "db-pick"   && <DBPicker  value={state.db_type} onChange={t => update({ db_type: t })} onNext={() => next("db-config")} />}
-        {step === "db-config" && state.db_type === "sqlite"     && (
+        {step === "welcome" && <Welcome onNext={() => next("db-pick")} />}
+        {step === "db-pick" && <DBPicker value={state.db_type} onChange={t => update({ db_type: t })} onNext={() => next("db-config")} />}
+        {step === "db-config" && state.db_type === "sqlite" && (
           <SQLiteSetup value={state.db_config} onChange={c => update({ db_config: c })} onNext={() => next("business")} onBack={() => next("db-pick")} />
         )}
         {step === "db-config" && state.db_type === "pocketbase" && (
           <PocketBaseSetup value={state.db_config} onChange={c => update({ db_config: c })} onNext={() => next("business")} onBack={() => next("db-pick")} />
         )}
-        {step === "business"  && <BusinessProfile value={state.business} onChange={b => update({ business: b })} onNext={() => next("api-keys")} onBack={() => next("db-config")} />}
-        {step === "api-keys"  && <APIKeys value={state.api_keys} onChange={k => update({ api_keys: k })} onNext={handleFinish} onBack={() => next("business")} saving={saving} />}
-        {step === "done"      && <Done onComplete={onComplete} />}
+        {step === "business" && <BusinessProfile value={state.business} onChange={b => update({ business: b })} onNext={() => next("api-keys")} onBack={() => next("db-config")} />}
+        {step === "api-keys" && <APIKeys value={state.api_keys} onChange={k => update({ api_keys: k })} onNext={handleFinish} onBack={() => next("business")} saving={saving} />}
+        {step === "done" && <Done onComplete={onComplete} />}
       </div>
 
       {error && (

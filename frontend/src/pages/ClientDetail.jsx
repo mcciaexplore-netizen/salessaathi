@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 const STAGES = ["New Lead", "Meeting Done", "Proposal", "Negotiation", "Closed Won", "Closed Lost"];
 const TEMP_COLOR = { hot: "#ef4444", warm: "#f59e0b", cold: "#3b82f6" };
 const TEMP_BG = { hot: "rgba(239, 68, 68, 0.1)", warm: "rgba(245, 158, 11, 0.1)", cold: "rgba(59, 130, 246, 0.1)" };
-const TEMP_ICON = { hot: "🔥", warm: "🌤", cold: "❄️" };
+const TEMP_ICON = { hot: "", warm: "", cold: "" };
 
 export default function ClientDetail({ clientId, navigate }) {
   const [client, setClient] = useState(null);
@@ -44,7 +44,7 @@ export default function ClientDetail({ clientId, navigate }) {
   return (
     <div style={{ padding: "48px 40px", maxWidth: "1000px", margin: "0 auto" }}>
       <button onClick={() => navigate("clients")} style={backBtn}>
-        <span style={{ fontSize: "16px" }}>←</span> Back to Clients
+        Back to Clients
       </button>
 
       {/* Header */}
@@ -69,10 +69,10 @@ export default function ClientDetail({ clientId, navigate }) {
         </div>
         <div style={{ display: "flex", gap: "12px" }}>
           <button onClick={() => navigate("log-meeting")} className="btn-primary">
-            📸 Log Meeting
+            Log Meeting
           </button>
           <button onClick={() => setEditing(!editing)} className="btn-secondary">
-            {editing ? "Close" : "✏️ Edit Profile"}
+            {editing ? "Close" : "Edit Profile"}
           </button>
         </div>
       </div>
@@ -111,9 +111,9 @@ export default function ClientDetail({ clientId, navigate }) {
             <div>
               <label style={labelSt}>Deal Temperature</label>
               <select value={form.deal_temp || "warm"} onChange={e => setForm(f => ({ ...f, deal_temp: e.target.value }))} className="glass-card" style={{ ...inpSt, padding: "12px" }}>
-                <option value="hot">🔥 Hot Lead</option>
-                <option value="warm">🌤 Warm Lead</option>
-                <option value="cold">❄️ Cold Lead</option>
+                <option value="hot">Hot Lead</option>
+                <option value="warm">Warm Lead</option>
+                <option value="cold">Cold Lead</option>
               </select>
             </div>
           </div>
@@ -180,13 +180,13 @@ function MeetingCard({ m, isLast }) {
                 <strong style={{ color: "#ef4444", fontSize: "12px" }}>PAIN POINTS:</strong> {m.problems}
               </div>}
               {m.follow_up_date && <div style={{ fontSize: "14px", color: "var(--accent-blue)", fontWeight: 600 }}>
-                📅 Follow-up scheduled for {m.follow_up_date}
+                Follow-up scheduled for {m.follow_up_date}
               </div>}
             </div>
           </div>
         </div>
         <button onClick={loadActions} className="btn-secondary" style={{ padding: "8px 16px", fontSize: "12px", whiteSpace: "nowrap" }}>
-          {open ? "▲ Hide Actions" : "▼ View Actions"}
+          {open ? "Hide Actions" : "View Actions"}
         </button>
       </div>
 

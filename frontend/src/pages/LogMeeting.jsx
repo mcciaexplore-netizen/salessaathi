@@ -60,7 +60,7 @@ export default function LogMeeting({ navigate }) {
   return (
     <div style={{ padding: "48px 40px", maxWidth: "800px", margin: "0 auto" }}>
       <button onClick={() => navigate("dashboard")} style={backBtn}>
-        <span style={{ fontSize: "16px" }}>←</span> Back to Dashboard
+        Back to Dashboard
       </button>
 
       <div style={{ marginBottom: "40px" }}>
@@ -72,7 +72,7 @@ export default function LogMeeting({ navigate }) {
 
       {/* Mode toggle */}
       <div className="glass-card" style={{ display: "inline-flex", gap: "4px", padding: "4px", marginBottom: "32px", borderRadius: "14px" }}>
-        {[["photo", "📸 Photo Upload"], ["text", "✏️ Write Notes"]].map(([m, label]) => (
+        {[["photo", "Photo Upload"], ["text", "Write Notes"]].map(([m, label]) => (
           <button key={m} onClick={() => { setMode(m); setError(""); }} style={{
             padding: "10px 24px", borderRadius: "10px", cursor: "pointer",
             background: mode === m ? "var(--accent-blue)" : "transparent",
@@ -104,7 +104,6 @@ export default function LogMeeting({ navigate }) {
               <img src={preview} alt="Notes" style={{ maxWidth: "100%", maxHeight: "400px", objectFit: "contain" }} />
             ) : (
               <div style={{ textAlign: "center", padding: "40px" }}>
-                <div style={{ fontSize: "56px", marginBottom: "20px", opacity: 0.8 }}>📷</div>
                 <div style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "18px", marginBottom: "8px" }}>Click or drag a photo here</div>
                 <div style={{ fontSize: "14px", color: "var(--text-muted)" }}>Supports JPEG, PNG, and HEIC</div>
               </div>
@@ -158,7 +157,7 @@ export default function LogMeeting({ navigate }) {
         width: "100%", padding: "18px", fontSize: "17px",
         opacity: loading ? 0.7 : 1,
       }}>
-        {loading ? "🤖 AI is reading your notes... (10-20s)" : "Extract Insights with AI →"}
+        {loading ? "AI is reading your notes... (10-20s)" : "Extract Insights with AI"}
       </button>
     </div>
   );

@@ -60,7 +60,7 @@ export default function ReviewMeeting({ data = {}, navigate }) {
   return (
     <div style={{ padding: "48px 40px", maxWidth: "1000px", margin: "0 auto" }}>
       <button onClick={() => navigate("log-meeting")} style={backBtn}>
-        <span style={{ fontSize: "16px" }}>←</span> Back
+        Back
       </button>
 
       <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "8px" }}>
@@ -91,7 +91,7 @@ export default function ReviewMeeting({ data = {}, navigate }) {
 
       <div style={{ display: "flex", flexDirection: "column", gap: "24px", marginBottom: "40px" }}>
         {/* Client info */}
-        <SectionCard title="Client Information" icon="👤">
+        <SectionCard title="Client Information" icon="">
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
             <Field label="Full Name *"><Input value={client.name} onChange={v => setC("name", v)} placeholder="e.g. Rahul Sharma" /></Field>
             <Field label="Company Name"><Input value={client.company} onChange={v => setC("company", v)} placeholder="e.g. Sharma Logistics" /></Field>
@@ -102,7 +102,7 @@ export default function ReviewMeeting({ data = {}, navigate }) {
         </SectionCard>
 
         {/* Meeting details */}
-        <SectionCard title="Meeting Insights" icon="📋">
+        <SectionCard title="Meeting Insights" icon="">
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "20px" }}>
             <Field label="Meeting date">
               <input type="date" value={meeting.meeting_date} onChange={e => setM("meeting_date", e.target.value)} className="glass-card" style={inputStyle} />
@@ -133,7 +133,7 @@ export default function ReviewMeeting({ data = {}, navigate }) {
         </SectionCard>
 
         {/* Action items */}
-        <SectionCard title="Identified Action Items" icon="✅">
+        <SectionCard title="Identified Action Items" icon="">
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             {actions.map((a, i) => (
               <div key={i} className="glass-card" style={{ display: "flex", gap: "12px", padding: "12px", alignItems: "center", background: "rgba(255,255,255,0.02)" }}>
@@ -146,7 +146,7 @@ export default function ReviewMeeting({ data = {}, navigate }) {
                 </select>
                 <input type="date" value={a.due_date || ""} onChange={e => updateAction(i, "due_date", e.target.value)}
                   className="glass-card" style={{ ...inputStyle, width: "150px", padding: "8px" }} />
-                <button onClick={() => removeAction(i)} style={{ color: "#ef4444", padding: "8px", fontSize: "18px" }}>✕</button>
+                <button onClick={() => removeAction(i)} style={{ color: "#ef4444", padding: "8px", fontSize: "12px", border: "1px solid #ef444433", borderRadius: "6px" }}>Remove</button>
               </div>
             ))}
           </div>
@@ -170,7 +170,7 @@ export default function ReviewMeeting({ data = {}, navigate }) {
           Discard and Retry
         </button>
         <button onClick={handleConfirm} disabled={saving} className="btn-primary" style={{ flex: 2, padding: "18px" }}>
-          {saving ? "Saving Extractions..." : "Confirm & Save to CRM →"}
+          {saving ? "Saving Extractions..." : "Confirm & Save to CRM"}
         </button>
       </div>
     </div>
@@ -179,7 +179,7 @@ export default function ReviewMeeting({ data = {}, navigate }) {
 
 const TEMP_BG = { hot: "rgba(239, 68, 68, 0.1)", warm: "rgba(245, 158, 11, 0.1)", cold: "rgba(59, 130, 246, 0.1)" };
 const TEMP_COLOR = { hot: "#ef4444", warm: "#f59e0b", cold: "#3b82f6" };
-const TEMP_ICON = { hot: "🔥", warm: "🌤", cold: "❄️" };
+const TEMP_ICON = { hot: "", warm: "", cold: "" };
 
 const SectionCard = ({ title, icon, children }) => (
   <div className="glass-card" style={{ padding: "32px" }}>

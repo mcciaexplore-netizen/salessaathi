@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 
 const PROVIDERS = [
-  { id: "gemini", name: "Google Gemini", icon: "🔷", getKeyUrl: "https://aistudio.google.com/app/apikey", desc: "Free · Vision support · Recommended" },
-  { id: "groq", name: "Groq", icon: "⚡", getKeyUrl: "https://console.groq.com/keys", desc: "Free · Very fast · Text only" },
-  { id: "openai", name: "OpenAI", icon: "🟢", getKeyUrl: "https://platform.openai.com/api-keys", desc: "Paid · GPT-4" },
+  { id: "gemini", name: "Google Gemini", icon: "", getKeyUrl: "https://aistudio.google.com/app/apikey", desc: "Free · Vision support · Recommended" },
+  { id: "groq", name: "Groq", icon: "", getKeyUrl: "https://console.groq.com/keys", desc: "Free · Very fast · Text only" },
+  { id: "openai", name: "OpenAI", icon: "", getKeyUrl: "https://platform.openai.com/api-keys", desc: "Paid · GPT-4" },
 ];
 
 export default function Settings() {
@@ -57,7 +57,7 @@ export default function Settings() {
 
       {/* Tab switcher */}
       <div className="glass-card" style={{ display: "flex", gap: "4px", padding: "4px", marginBottom: "40px", borderRadius: "14px" }}>
-        {[["keys", "🔑 API Keys"], ["business", "🏢 Business Profile"]].map(([t, l]) => (
+        {[["keys", "API Keys"], ["business", "Business Profile"]].map(([t, l]) => (
           <button key={t} onClick={() => setTab(t)} style={{
             flex: 1, padding: "12px", borderRadius: "10px", border: "none", cursor: "pointer",
             background: tab === t ? "var(--accent-blue)" : "transparent",
@@ -84,7 +84,7 @@ export default function Settings() {
                 return (
                   <div key={k.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 0", borderBottom: "1px solid var(--border-glass)" }}>
                     <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
-                      <span style={{ fontSize: "24px" }}>{p.icon || "🔑"}</span>
+                      <div style={{ width: "24px", height: "24px", background: "var(--secondary-pastel)", borderRadius: "6px" }}></div>
                       <div>
                         <div style={{ fontWeight: 600, fontSize: "15px", color: "var(--text-primary)" }}>{p.name || k.provider}{k.label ? ` · ${k.label}` : ""}</div>
                         <div style={{ fontFamily: "monospace", fontSize: "12px", color: "var(--text-muted)", marginTop: "4px" }}>{k.key_value}</div>
@@ -119,7 +119,7 @@ export default function Settings() {
                   <input type="password" value={newKey.key} onChange={e => setNewKey(k => ({ ...k, key: e.target.value }))} placeholder="Paste your secret key here" className="glass-card" style={{ ...inpSt, flex: 1, fontFamily: "monospace" }} />
                   <a href={PROVIDERS.find(p => p.id === newKey.provider)?.getKeyUrl} target="_blank" rel="noreferrer"
                     className="btn-secondary" style={{ display: "flex", alignItems: "center", textDecoration: "none", fontSize: "13px" }}>
-                    Get Key →
+                    Get Key
                   </a>
                 </div>
               </div>
@@ -135,7 +135,7 @@ export default function Settings() {
         <div className="glass-card" style={{ padding: "32px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "32px" }}>
             <h3 style={{ fontSize: "18px", margin: 0 }}>Business Profile</h3>
-            {!bizForm && <button onClick={() => setBizForm({ ...business })} className="btn-secondary" style={{ padding: "8px 16px", fontSize: "13px" }}>✏️ Edit Profile</button>}
+            {!bizForm && <button onClick={() => setBizForm({ ...business })} className="btn-secondary" style={{ padding: "8px 16px", fontSize: "13px" }}>Edit Profile</button>}
           </div>
 
           {bizForm ? (
@@ -157,10 +157,10 @@ export default function Settings() {
             </div>
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "24px" }}>
-              {[["🏢", "Business", business.name], ["👤", "Owner", business.owner_name], ["🏭", "Industry", business.industry], ["📍", "City", business.city], ["📞", "Phone", business.phone], ["📧", "Email", business.email]].map(([icon, label, val]) => val ? (
+              {[["", "Business", business.name], ["", "Owner", business.owner_name], ["", "Industry", business.industry], ["", "City", business.city], ["", "Phone", business.phone], ["", "Email", business.email]].map(([icon, label, val]) => val ? (
                 <div key={label} style={{ paddingBottom: "16px", borderBottom: "1px solid var(--border-glass)" }}>
-                  <div style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
-                    <span>{icon}</span> {label}
+                  <div style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "8px" }}>
+                    {label}
                   </div>
                   <div style={{ fontSize: "16px", color: "var(--text-primary)", fontWeight: 500 }}>{val}</div>
                 </div>
