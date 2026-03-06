@@ -17,7 +17,7 @@ class Config:
 
     # ── Database ──────────────────────────────────────────────────────
     DB_TYPE     = os.getenv("DB_TYPE", "sqlite")          # sqlite | pocketbase
-    SQLITE_PATH = os.getenv("SQLITE_PATH", "./data/salessaathi.db")
+    SQLITE_PATH = os.getenv("SQLITE_PATH", "/tmp/salessaathi.db" if os.getenv("VERCEL") else "./data/salessaathi.db")
     PB_URL      = os.getenv("POCKETBASE_URL", "http://127.0.0.1:8090")
     PB_EMAIL    = os.getenv("POCKETBASE_EMAIL", "")
     PB_PASSWORD = os.getenv("POCKETBASE_PASSWORD", "")

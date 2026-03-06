@@ -1,4 +1,5 @@
 import os
+import json
 import gspread
 from google.oauth2.service_account import Credentials
 from threading import Thread
@@ -10,9 +11,18 @@ SCOPES = [
 ]
 
 def get_sheets_client():
+    creds_json = os.environ.get("GOOGLE_CREDENTIALS_JSON")
+    if creds_json:
+        try:
+            creds_info = json.loads(creds_json)
+            credentials = Credentials.from_service_account_info(creds_info, scopes=SCOPES)
+            return gspread.authorize(credentials)
+        except Exception as e:
+            print(f"⚠️ Error parsing GOOGLE_CREDENTIALS_JSON: {e}")
+
     creds_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "credentials.json")
     if not os.path.exists(creds_path):
-        print("⚠️ Google Sheets integration skipped: 'credentials.json' not found in the backend folder.")
+        print("⚠️ Google Sheets integration skipped: GOOGLE_CREDENTIALS_JSON env var not set and 'credentials.json' not found in the backend folder.")
         return None
     
     try:
@@ -92,6 +102,6 @@ def async_sync_data(client_data, meeting_data, actions):
     Fires off a background thread so the user doesn't have to wait 
     for the slow Google Sheets API call.
     """
-    sheet_id = "1Bx6YvDOp05kuLl1KIZxAVTdzthtrVLWqg17toPdOZNI"
+    sheet_id = os.environ.get("GOOGLE_SHEET_ID", "1PEVRVpDRWj7V7H8UL667NgfG552gSKa93oG69Tg7XAo")
     thread = Thread(target=sync_to_sheets_task, args=(client_data, meeting_data, actions, sheet_id))
     thread.start()

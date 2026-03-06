@@ -52,7 +52,14 @@ def test_db_connection():
             project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             raw  = data.get("sqlite_path", "./data/salessaathi.db")
             path = os.path.join(project_root, raw) if not os.path.isabs(raw) else raw
-            os.makedirs(os.path.dirname(path), exist_ok=True)
+            try:
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+            except OSError:
+                if os.environ.get("VERCEL"):
+                    path = "/tmp/salessaathi.db"
+                else:
+                    pass
+            
             store = SQLiteDataStore(path)
             store.init_schema()
             ok = store.is_ready()
@@ -90,8 +97,11 @@ def save_setup():
         env_lines.append(f"POCKETBASE_PASSWORD={db_config.get('pb_password', '')}")
 
     env_path = os.path.join(os.path.dirname(__file__), "..", ".env")
-    with open(env_path, "w") as f:
-        f.write("\n".join(env_lines) + "\n")
+    try:
+        with open(env_path, "w") as f:
+            f.write("\n".join(env_lines) + "\n")
+    except OSError:
+        pass  # Ignore on Vercel's read-only filesystem
 
     os.environ.update({"DB_TYPE": db_type, "SETUP_DONE": "true"})
     if db_type == "sqlite":
