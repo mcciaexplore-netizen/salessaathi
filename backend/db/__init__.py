@@ -21,7 +21,10 @@ def get_store() -> DataStore:
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         raw_path = os.getenv("SQLITE_PATH", "./data/salessaathi.db")
         db_path = os.path.join(project_root, raw_path) if not os.path.isabs(raw_path) else raw_path
-        os.makedirs(os.path.dirname(db_path), exist_ok=True)
+        try:
+            os.makedirs(os.path.dirname(db_path), exist_ok=True)
+        except OSError:
+            pass
         store = SQLiteDataStore(db_path)
 
     elif db_type == "pocketbase":

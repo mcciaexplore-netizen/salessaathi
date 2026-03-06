@@ -4,7 +4,7 @@ source venv/bin/activate
 
 echo ""
 echo "  Starting SalesSaathi..."
-echo "  Backend → http://localhost:5000"
+echo "  Backend → http://localhost:5001"
 echo "  App     → http://localhost:3000  (opens in 3 seconds)"
 echo "  Press Ctrl+C to stop."
 echo ""

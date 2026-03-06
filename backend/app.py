@@ -15,8 +15,16 @@ app = Flask(__name__, static_folder="../frontend/dist", static_url_path="")
 app.config.from_object(Config)
 CORS(app, origins=["http://localhost:3000", "http://localhost:5173"])
 
-UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "uploads")
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+# Create upload directory gracefully (handle Vercel read-only filesystem)
+if os.environ.get("VERCEL"):
+    UPLOAD_DIR = "/tmp/uploads"
+else:
+    UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "uploads")
+
+try:
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+except OSError:
+    pass  # Ignore Read-only filesystem error on Vercel
 
 
 # ── Health ────────────────────────────────────────────────────────────────────
@@ -259,6 +267,13 @@ def confirm_meeting():
 
     created = [store.create_action_item(meeting["id"], a)
                for a in actions if a.get("description")]
+
+    # ── HYBRID SYNC: Push to Google Sheets in background
+    try:
+        from services.google_sheets import async_sync_data
+        async_sync_data(client, meeting, created)
+    except Exception as e:
+        print(f"Warning: Failed to trigger Google Sheets sync: {e}")
 
     return jsonify({"ok": True, "client": client, "meeting": meeting, "action_items": created}), 201
 
