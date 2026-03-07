@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { api } from "../services/api";
 
 export default function LogMeeting({ navigate }) {
   const [mode, setMode] = useState("photo");    // photo | text
@@ -17,13 +18,6 @@ export default function LogMeeting({ navigate }) {
     setError("");
   };
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setDragOver(false);
-    const f = e.dataTransfer.files[0];
-    if (f && f.type.startsWith("image/")) handleFile(f);
-  };
-
   const handleProcess = async () => {
     if (mode === "photo" && !file) { setError("Please upload a photo first."); return; }
     if (mode === "text" && !text.trim()) { setError("Please enter your meeting notes."); return; }
@@ -32,140 +26,143 @@ export default function LogMeeting({ navigate }) {
     setError("");
 
     try {
-      let body;
+      const formData = new FormData();
       if (mode === "photo") {
-        body = new FormData();
-        body.append("image", file);
+        formData.append("image", file);
       } else {
-        body = new FormData();
-        body.append("text", text);
+        formData.append("text", text);
       }
 
-      const resp = await fetch("/api/meetings/extract", { method: "POST", body });
-      const data = await resp.json();
-
-      if (!resp.ok || data.error) {
-        setError(data.error || "Something went wrong. Please try again.");
-        return;
-      }
-
+      const data = await api.meetings.extract(formData);
       navigate("review-meeting", { extracted: data.extracted, imagePreview: preview });
     } catch (e) {
-      setError("Could not reach the server. Make sure SalesSaathi is running.");
+      setError(e.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ padding: "48px 40px", maxWidth: "800px", margin: "0 auto" }}>
-      <button onClick={() => navigate("dashboard")} style={backBtn}>
-        Back to Dashboard
-      </button>
-
-      <div style={{ marginBottom: "40px" }}>
-        <h1 style={{ fontSize: "32px", marginBottom: "8px" }}>Log a Meeting</h1>
-        <p style={{ color: "var(--text-muted)", fontSize: "16px" }}>
-          Upload a photo of your handwritten notes, or type them directly. Let AI do the data entry.
+    <div className="animate-fade-in" style={{ maxWidth: '800px', margin: '0 auto' }}>
+      <header style={{ marginBottom: "2.5rem" }}>
+        <button
+          onClick={() => navigate("dashboard")}
+          style={{ background: 'none', color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}
+        >
+          ← Back to Dashboard
+        </button>
+        <h1 style={{ fontSize: "1.85rem", marginBottom: "0.5rem" }}>Log a Meeting / Lead</h1>
+        <p style={{ color: "var(--text-secondary)" }}>
+          Upload a photo of your handwritten notes or type them out. Our AI will structure the data for you.
         </p>
+      </header>
+
+      {/* Mode Toggle */}
+      <div className="card" style={{ display: "inline-flex", gap: "0.5rem", padding: "0.5rem", marginBottom: "2.5rem" }}>
+        <button
+          onClick={() => setMode("photo")}
+          style={{
+            padding: "0.6rem 1.5rem",
+            borderRadius: "8px",
+            backgroundColor: mode === "photo" ? "var(--accent-primary)" : "transparent",
+            color: mode === "photo" ? "white" : "var(--text-secondary)",
+            fontWeight: "500",
+            fontSize: "0.9rem"
+          }}
+        >
+          📸 Photo Upload
+        </button>
+        <button
+          onClick={() => setMode("text")}
+          style={{
+            padding: "0.6rem 1.5rem",
+            borderRadius: "8px",
+            backgroundColor: mode === "text" ? "var(--accent-primary)" : "transparent",
+            color: mode === "text" ? "white" : "var(--text-secondary)",
+            fontWeight: "500",
+            fontSize: "0.9rem"
+          }}
+        >
+          ✍️ Type Notes
+        </button>
       </div>
 
-      {/* Mode toggle */}
-      <div className="glass-card" style={{ display: "inline-flex", gap: "4px", padding: "4px", marginBottom: "32px", borderRadius: "14px" }}>
-        {[["photo", "Photo Upload"], ["text", "Write Notes"]].map(([m, label]) => (
-          <button key={m} onClick={() => { setMode(m); setError(""); }} style={{
-            padding: "10px 24px", borderRadius: "10px", cursor: "pointer",
-            background: mode === m ? "var(--accent-blue)" : "transparent",
-            color: mode === m ? "#fff" : "var(--text-secondary)",
-            fontSize: "14px", fontWeight: mode === m ? 600 : 500,
-            transition: "all 0.2s ease",
-          }}>{label}</button>
-        ))}
-      </div>
-
-      {mode === "photo" ? (
-        <div style={{ marginBottom: "24px" }}>
-          {/* Drop zone */}
+      <div className="card" style={{ marginBottom: '2rem', padding: '2rem' }}>
+        {mode === "photo" ? (
           <div
             onDragOver={e => { e.preventDefault(); setDragOver(true); }}
             onDragLeave={() => setDragOver(false)}
-            onDrop={handleDrop}
+            onDrop={e => {
+              e.preventDefault();
+              setDragOver(false);
+              const f = e.dataTransfer.files[0];
+              if (f && f.type.startsWith("image/")) handleFile(f);
+            }}
             onClick={() => inputRef.current?.click()}
-            className="glass-card"
             style={{
-              borderStyle: "dashed",
-              borderColor: dragOver ? "var(--accent-blue)" : "var(--border-glass)",
-              minHeight: "320px",
-              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-              cursor: "pointer", marginBottom: "16px", overflow: "hidden",
-              background: dragOver ? "rgba(59, 130, 246, 0.05)" : "var(--bg-glass)",
-            }}>
+              border: `2px dashed ${dragOver ? 'var(--accent-primary)' : 'var(--border-color)'}`,
+              borderRadius: '12px',
+              minHeight: '300px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              backgroundColor: dragOver ? 'var(--bg-secondary)' : 'transparent',
+              transition: 'all 0.2s ease',
+              overflow: 'hidden'
+            }}
+          >
             {preview ? (
               <img src={preview} alt="Notes" style={{ maxWidth: "100%", maxHeight: "400px", objectFit: "contain" }} />
             ) : (
-              <div style={{ textAlign: "center", padding: "40px" }}>
-                <div style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "18px", marginBottom: "8px" }}>Click or drag a photo here</div>
-                <div style={{ fontSize: "14px", color: "var(--text-muted)" }}>Supports JPEG, PNG, and HEIC</div>
+              <div style={{ textAlign: 'center' }}>
+                <span style={{ fontSize: '3rem', display: 'block', marginBottom: '1rem' }}>🖼️</span>
+                <p style={{ fontWeight: '600', marginBottom: '0.5rem' }}>Drop your photo here</p>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Supports JPG, PNG, HEIC</p>
               </div>
             )}
+            <input type="file" ref={inputRef} style={{ display: 'none' }} onChange={e => handleFile(e.target.files[0])} accept="image/*" />
           </div>
-          <input ref={inputRef} type="file" accept="image/*" style={{ display: "none" }}
-            onChange={e => handleFile(e.target.files[0])} />
-
-          {preview && (
-            <button onClick={() => { setFile(null); setPreview(null); }} style={{
-              background: "#fee2e2", border: "1px solid #fca5a5", color: "#991b1b", fontSize: "14px",
-              cursor: "pointer", marginBottom: "24px", fontWeight: 600, padding: "8px 16px", borderRadius: "8px"
-            }}>Remove photo and try another</button>
-          )}
-        </div>
-      ) : (
-        <textarea
-          value={text}
-          onChange={e => setText(e.target.value)}
-          placeholder={`Write your meeting notes here…\n\nClient: Ramesh Patil, Patil Auto Parts\nDiscussed: 50-unit order of spare parts\nConcern: delivery timeline\nFollow-up: March 12`}
-          className="glass-card"
-          style={{
-            width: "100%", minHeight: "320px", padding: "24px",
-            fontSize: "16px", lineHeight: 1.6, color: "var(--text-primary)",
-            fontFamily: "inherit", resize: "vertical",
-            outline: "none", marginBottom: "24px", boxSizing: "border-box",
-          }}
-        />
-      )}
-
-      {error && (
-        <div style={{
-          background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)",
-          borderRadius: "12px", padding: "16px 20px",
-          marginBottom: "24px", color: "#fca5a5", fontSize: "14px"
-        }}>
-          <strong>Wait — </strong> {error}
-        </div>
-      )}
-
-      <div className="glass-card" style={{
-        padding: "16px 24px", marginBottom: "32px",
-        background: "rgba(59, 130, 246, 0.05)",
-      }}>
-        <div style={{ fontSize: "14px", color: "var(--text-secondary)", lineHeight: 1.5 }}>
-          <span style={{ color: "var(--accent-blue)", fontWeight: 700 }}>AI Note Reader</span> <span style={{ opacity: 0.8 }}>uses Gemini Pro to extract structured sales data from your images or text. Privacy first: your notes are only used for this extraction.</span>
-        </div>
+        ) : (
+          <textarea
+            value={text}
+            onChange={e => setText(e.target.value)}
+            style={{
+              width: "100%",
+              minHeight: "300px",
+              padding: "1.5rem",
+              borderRadius: "12px",
+              border: "1px solid var(--border-color)",
+              outline: "none",
+              fontFamily: "inherit",
+              fontSize: "1rem",
+              resize: 'vertical',
+              backgroundColor: 'var(--bg-secondary)'
+            }}
+            placeholder="Type your notes here... e.g. Met with Anil from Tata Motors regarding new membership. Interested in HR services."
+          />
+        )}
       </div>
 
-      <button onClick={handleProcess} disabled={loading} className="btn-primary" style={{
-        width: "100%", padding: "18px", fontSize: "17px",
-        opacity: loading ? 0.7 : 1,
-      }}>
-        {loading ? "AI is reading your notes... (10-20s)" : "Extract Insights with AI"}
+      {error && (
+        <div style={{ backgroundColor: '#fee2e2', color: '#b91c1c', padding: '1rem', borderRadius: '8px', marginBottom: '2rem', fontSize: '0.9rem' }}>
+          <strong>Oops:</strong> {error}
+        </div>
+      )}
+
+      <button
+        className="btn-primary"
+        style={{ width: '100%', padding: '1.2rem', fontSize: '1.1rem' }}
+        disabled={loading}
+        onClick={handleProcess}
+      >
+        {loading ? "AI is processing your notes..." : "🚀 Let AI Analyze My Notes"}
       </button>
+
+      <p style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+        Powered by Google Gemini 1.5 Pro
+      </p>
     </div>
   );
 }
-
-const backBtn = {
-  background: "none", border: "none", color: "var(--text-muted)",
-  fontSize: "14px", cursor: "pointer", padding: "0 0 24px",
-  display: "inline-flex", alignItems: "center", gap: "8px",
-  fontWeight: 500,
-};

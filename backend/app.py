@@ -100,6 +100,7 @@ def save_setup():
     db_config = data.get("db_config", {})
     business  = data.get("business", {})
     api_keys  = data.get("api_keys", [])
+    user_data = data.get("user", {})
 
     env_lines = [f"DB_TYPE={db_type}", "SETUP_DONE=true", f"SECRET_KEY={_random_secret()}"]
     if db_type == "sqlite":
@@ -134,8 +135,62 @@ def save_setup():
     for k in api_keys:
         if k.get("key"):
             store.add_api_key(provider=k.get("provider", "gemini"), key=k["key"], label=k.get("label", ""))
+    
+    # Create initial user if provided
+    if user_data.get("username") and user_data.get("password"):
+        from werkzeug.security import generate_password_hash
+        store.create_user({
+            "username": user_data["username"],
+            "password_hash": generate_password_hash(user_data["password"]),
+            "full_name": user_data.get("full_name", user_data["username"]),
+            "email": user_data.get("email", "")
+        })
 
     return jsonify({"ok": True})
+
+
+# ── Authentication ────────────────────────────────────────────────────────────
+from flask import session
+from werkzeug.security import check_password_hash, generate_password_hash
+
+@app.post("/api/auth/login")
+def login():
+    data = request.json or {}
+    username = data.get("username")
+    password = data.get("password")
+    
+    if not username or not password:
+        return jsonify({"error": "Username and password required"}), 400
+    
+    store = get_store()
+    user = store.get_user(username)
+    
+    if user and check_password_hash(user["password_hash"], password):
+        session["user_id"] = user["id"]
+        session["username"] = user["username"]
+        # Don't return password hash
+        user_data = {k: v for k, v in user.items() if k != "password_hash"}
+        return jsonify({"ok": True, "user": user_data})
+    
+    return jsonify({"error": "Invalid credentials"}), 401
+
+@app.post("/api/auth/logout")
+def logout():
+    session.clear()
+    return jsonify({"ok": True})
+
+@app.get("/api/auth/me")
+def me():
+    if "user_id" not in session:
+        return jsonify({"authenticated": False}), 401
+    
+    store = get_store()
+    user = store.get_user(session["username"])
+    if not user:
+        return jsonify({"authenticated": False}), 401
+    
+    user_data = {k: v for k, v in user.items() if k != "password_hash"}
+    return jsonify({"authenticated": True, "user": user_data})
 
 
 # ── Dashboard ─────────────────────────────────────────────────────────────────

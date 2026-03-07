@@ -1,4 +1,7 @@
-const STAGES = ["New Lead", "Meeting Done", "Proposal", "Negotiation", "Closed Won", "Closed Lost"];
+import { useState } from "react";
+import { api } from "../services/api";
+
+const STAGES = ["New Lead", "Contacted", "Interested", "Follow-Up Required", "Converted", "Not Interested"];
 
 export default function ReviewMeeting({ data = {}, navigate }) {
   const ex = data.extracted || {};
@@ -9,7 +12,12 @@ export default function ReviewMeeting({ data = {}, navigate }) {
     phone: ex.phone || "",
     email: ex.email || "",
     city: ex.city || "",
+    service_interest: ex.service_interest || "",
+    lead_source: ex.lead_source || "Meeting",
+    next_follow_up_date: ex.follow_up_date || "",
+    follow_up_notes: ex.follow_up_notes || "",
   });
+
   const [meeting, setMeeting] = useState({
     meeting_date: new Date().toISOString().split("T")[0],
     follow_up_date: ex.follow_up_date || "",
@@ -19,38 +27,45 @@ export default function ReviewMeeting({ data = {}, navigate }) {
     budget_signal: ex.budget_signal || "",
     objections: ex.objections || "",
     deal_temp: ex.deal_temp || "warm",
-    deal_stage: "Meeting Done",
+    deal_stage: "Contacted",
   });
+
   const [actions, setActions] = useState(
     (ex.action_items || []).map(a => ({ ...a, done: false }))
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  const setC = (k, v) => setClient(c => ({ ...c, [k]: v }));
-  const setM = (k, v) => setMeeting(m => ({ ...m, [k]: v }));
-
-  const addAction = () => setActions(a => [...a, { description: "", assigned_to: "salesperson", due_date: "" }]);
-  const updateAction = (i, k, v) => setActions(a => a.map((x, j) => j === i ? { ...x, [k]: v } : x));
-  const removeAction = (i) => setActions(a => a.filter((_, j) => j !== i));
+  const updateClient = (k, v) => setClient(c => ({ ...c, [k]: v }));
+  const updateMeeting = (k, v) => setMeeting(m => ({ ...m, [k]: v }));
 
   const handleConfirm = async () => {
-    if (!client.name.trim()) { setError("Client name is required."); return; }
+    if (!client.name.trim()) { setError("Contact person name is required."); return; }
+    if (!client.company.trim()) { setError("Company name is required."); return; }
+
     setSaving(true);
     setError("");
     try {
-      const resp = await fetch("/api/meetings/confirm", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ client, meeting, action_items: actions.filter(a => a.description) }),
+      // Sync client data with meeting data for consistency
+      const clientPayload = {
+        ...client,
+        deal_temp: meeting.deal_temp,
+        deal_stage: meeting.deal_stage,
+        next_follow_up_date: client.next_follow_up_date || meeting.follow_up_date
+      };
+
+      const res = await api.meetings.confirm({
+        client: clientPayload,
+        meeting,
+        action_items: actions.filter(a => a.description)
       });
-      const d = await resp.json();
-      if (d.ok) {
-        navigate("client-detail", { clientId: d.client.id });
+
+      if (res.ok) {
+        navigate("client-detail", { clientId: res.client.id });
       } else {
-        setError(d.error || "Failed to save. Please try again.");
+        setError(res.error || "Failed to save. Please try again.");
       }
-    } catch {
+    } catch (err) {
       setError("Server error. Please try again.");
     } finally {
       setSaving(false);
@@ -58,155 +73,145 @@ export default function ReviewMeeting({ data = {}, navigate }) {
   };
 
   return (
-    <div style={{ padding: "48px 40px", maxWidth: "1000px", margin: "0 auto" }}>
-      <button onClick={() => navigate("log-meeting")} style={backBtn}>
-        Back
-      </button>
+    <div className="animate-fade-in" style={{ maxWidth: '1000px', margin: '0 auto' }}>
+      <header style={{ marginBottom: "2.5rem" }}>
+        <button
+          onClick={() => navigate("log-meeting")}
+          style={{ background: 'none', color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.9rem' }}
+        >
+          ← Back to Extraction
+        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <h1 style={{ fontSize: "1.85rem", margin: 0 }}>Review Extractions</h1>
+          <span className="badge badge-interested">AI PROCESSED</span>
+        </div>
+        <p style={{ color: "var(--text-secondary)", marginTop: '0.5rem' }}>
+          Verify and refine the information extracted by AI before saving it to the system.
+        </p>
+      </header>
 
-      <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "8px" }}>
-        <h1 style={{ fontSize: "32px", margin: 0 }}>Review Extractions</h1>
-        <span className="glass-card" style={{
-          background: "rgba(59, 130, 246, 0.1)", color: "var(--accent-blue)",
-          fontSize: "11px", fontWeight: 800, padding: "4px 12px",
-          borderRadius: "999px", border: "1px solid rgba(59, 130, 246, 0.2)",
-          textTransform: "uppercase", letterSpacing: "0.05em"
-        }}>
-          AI Powered
-        </span>
-      </div>
-      <p style={{ color: "var(--text-muted)", fontSize: "16px", marginBottom: "32px" }}>
-        Verify the information extracted from your notes. Edit as needed before saving.
-      </p>
-
-      {data.imagePreview && (
-        <div style={{ marginBottom: "32px" }}>
-          <div style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "12px", fontWeight: 700, textTransform: "uppercase" }}>Original Reference</div>
-          <div className="glass-card" style={{ padding: "12px", background: "rgba(255,255,255,0.02)" }}>
-            <img src={data.imagePreview} alt="Original notes" style={{
-              maxWidth: "100%", maxHeight: "240px", objectFit: "contain", borderRadius: "8px",
-            }} />
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2rem", marginBottom: "3rem" }}>
+        {/* Left Column: Client Data */}
+        <div className="card">
+          <h2 style={{ fontSize: '1.1rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>Company & Contact</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <Field label="Company Name *">
+              <input className="btn-outline" style={inputStyle} value={client.company} onChange={e => updateClient("company", e.target.value)} />
+            </Field>
+            <Field label="Contact Person *">
+              <input className="btn-outline" style={inputStyle} value={client.name} onChange={e => updateClient("name", e.target.value)} />
+            </Field>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <Field label="Phone Number">
+                <input className="btn-outline" style={inputStyle} value={client.phone} onChange={e => updateClient("phone", e.target.value)} />
+              </Field>
+              <Field label="Email Address">
+                <input className="btn-outline" style={inputStyle} value={client.email} onChange={e => updateClient("email", e.target.value)} />
+              </Field>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <Field label="Service Interest">
+                <input className="btn-outline" style={inputStyle} value={client.service_interest} onChange={e => updateClient("service_interest", e.target.value)} placeholder="e.g. HR Services" />
+              </Field>
+              <Field label="Lead Source">
+                <input className="btn-outline" style={inputStyle} value={client.lead_source} onChange={e => updateClient("lead_source", e.target.value)} placeholder="e.g. Exhibition" />
+              </Field>
+            </div>
           </div>
         </div>
-      )}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "24px", marginBottom: "40px" }}>
-        {/* Client info */}
-        <SectionCard title="Client Information" icon="">
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
-            <Field label="Full Name *"><Input value={client.name} onChange={v => setC("name", v)} placeholder="e.g. Rahul Sharma" /></Field>
-            <Field label="Company Name"><Input value={client.company} onChange={v => setC("company", v)} placeholder="e.g. Sharma Logistics" /></Field>
-            <Field label="Phone Number"><Input value={client.phone} onChange={v => setC("phone", v)} placeholder="+91..." /></Field>
-            <Field label="Email Address"><Input value={client.email} onChange={v => setC("email", v)} placeholder="email@example.com" /></Field>
-            <Field label="City / Location"><Input value={client.city} onChange={v => setC("city", v)} placeholder="e.g. Pune" /></Field>
-          </div>
-        </SectionCard>
-
-        {/* Meeting details */}
-        <SectionCard title="Meeting Insights" icon="">
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "20px" }}>
-            <Field label="Meeting date">
-              <input type="date" value={meeting.meeting_date} onChange={e => setM("meeting_date", e.target.value)} className="glass-card" style={inputStyle} />
+        {/* Right Column: Meeting & Status */}
+        <div className="card">
+          <h2 style={{ fontSize: '1.1rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>Deal Progress</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <Field label="Lead Status">
+              <select className="btn-outline" style={inputStyle} value={meeting.deal_stage} onChange={e => updateMeeting("deal_stage", e.target.value)}>
+                {STAGES.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
             </Field>
-            <Field label="Follow-up date">
-              <input type="date" value={meeting.follow_up_date} onChange={e => setM("follow_up_date", e.target.value)} className="glass-card" style={inputStyle} />
-            </Field>
-          </div>
-          <Field label="Deal Sentiment" style={{ marginBottom: "24px" }}>
-            <div style={{ display: "flex", gap: "10px" }}>
-              {["hot", "warm", "cold"].map(t => (
-                <button key={t} onClick={() => setM("deal_temp", t)} style={{
-                  flex: 1, padding: "12px", borderRadius: "10px", cursor: "pointer",
-                  border: `1px solid ${meeting.deal_temp === t ? TEMP_COLOR[t] : "var(--border-glass)"}`,
-                  background: meeting.deal_temp === t ? TEMP_BG[t] : "transparent",
-                  color: meeting.deal_temp === t ? TEMP_COLOR[t] : "var(--text-muted)",
-                  fontSize: "14px", fontWeight: 700, transition: "all 0.2s ease"
-                }}>{TEMP_ICON[t]} {t.toUpperCase()}</button>
-              ))}
-            </div>
-          </Field>
-          <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-            <Field label="Key Summary"><Textarea value={meeting.summary} onChange={v => setM("summary", v)} placeholder="What was the main outcome?" rows={3} /></Field>
-            <Field label="Problems / Needs"><Textarea value={meeting.problems} onChange={v => setM("problems", v)} placeholder="What pain points were identified?" rows={2} /></Field>
-            <Field label="Budget Signals"><Input value={meeting.budget_signal} onChange={v => setM("budget_signal", v)} placeholder="e.g. 10 Lakhs, Negotiable" /></Field>
-            <Field label="Client Objections"><Textarea value={meeting.objections} onChange={v => setM("objections", v)} placeholder="Any hesitations or concerns?" rows={2} /></Field>
-          </div>
-        </SectionCard>
-
-        {/* Action items */}
-        <SectionCard title="Identified Action Items" icon="">
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            {actions.map((a, i) => (
-              <div key={i} className="glass-card" style={{ display: "flex", gap: "12px", padding: "12px", alignItems: "center", background: "rgba(255,255,255,0.02)" }}>
-                <div style={{ flex: 1 }}>
-                  <Input value={a.description} onChange={v => updateAction(i, "description", v)} placeholder="Action description..." />
-                </div>
-                <select value={a.assigned_to} onChange={e => updateAction(i, "assigned_to", e.target.value)} className="glass-card" style={{ ...inputStyle, width: "130px", padding: "8px" }}>
-                  <option value="salesperson" style={{ background: "#1a1a1a" }}>Our Team</option>
-                  <option value="client" style={{ background: "#1a1a1a" }}>Client</option>
-                </select>
-                <input type="date" value={a.due_date || ""} onChange={e => updateAction(i, "due_date", e.target.value)}
-                  className="glass-card" style={{ ...inputStyle, width: "150px", padding: "8px" }} />
-                <button onClick={() => removeAction(i)} style={{ color: "#ef4444", padding: "8px", fontSize: "12px", border: "1px solid #ef444433", borderRadius: "6px" }}>Remove</button>
+            <Field label="Interest Level">
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                {['cold', 'warm', 'hot'].map(t => (
+                  <button
+                    key={t}
+                    onClick={() => updateMeeting("deal_temp", t)}
+                    style={{
+                      flex: 1,
+                      padding: '0.6rem',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      backgroundColor: meeting.deal_temp === t ? 'var(--accent-primary)' : 'transparent',
+                      color: meeting.deal_temp === t ? 'white' : 'var(--text-secondary)',
+                      fontWeight: '600',
+                      fontSize: '0.8rem',
+                      textTransform: 'uppercase'
+                    }}
+                  >
+                    {t}
+                  </button>
+                ))}
               </div>
-            ))}
+            </Field>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <Field label="Meeting Date">
+                <input type="date" className="btn-outline" style={inputStyle} value={meeting.meeting_date} onChange={e => updateMeeting("meeting_date", e.target.value)} />
+              </Field>
+              <Field label="Next Follow-up">
+                <input type="date" className="btn-outline" style={inputStyle} value={client.next_follow_up_date} onChange={e => updateClient("next_follow_up_date", e.target.value)} />
+              </Field>
+            </div>
+            <Field label="Follow-up Notes">
+              <textarea className="btn-outline" style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} value={client.follow_up_notes} onChange={e => updateClient("follow_up_notes", e.target.value)} placeholder="What needs to be done next?" />
+            </Field>
           </div>
-          <button onClick={addAction} className="btn-secondary" style={{ marginTop: "16px", padding: "10px 20px", width: "100%", borderStyle: "dashed" }}>
-            + Add Another Action
-          </button>
-        </SectionCard>
+        </div>
+      </div>
+
+      {/* Summary Section */}
+      <div className="card" style={{ marginBottom: '3rem' }}>
+        <h2 style={{ fontSize: '1.1rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>Meeting Summary & Insights</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <Field label="Key Discussion Points">
+            <textarea className="btn-outline" style={{ ...inputStyle, minHeight: '100px', resize: 'vertical' }} value={meeting.summary} onChange={e => updateMeeting("summary", e.target.value)} />
+          </Field>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+            <Field label="Pain Points / Problems">
+              <textarea className="btn-outline" style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} value={meeting.problems} onChange={e => updateMeeting("problems", e.target.value)} />
+            </Field>
+            <Field label="Budget / Timeline Signals">
+              <textarea className="btn-outline" style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} value={meeting.budget_signal} onChange={e => updateMeeting("budget_signal", e.target.value)} />
+            </Field>
+          </div>
+        </div>
       </div>
 
       {error && (
-        <div style={{
-          background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)",
-          borderRadius: "12px", padding: "16px 20px", marginBottom: "32px", color: "#fca5a5"
-        }}>
+        <div style={{ backgroundColor: '#fee2e2', color: '#b91c1c', padding: '1rem', borderRadius: '8px', marginBottom: '2rem', textAlign: 'center' }}>
           {error}
         </div>
       )}
 
-      <div style={{ display: "flex", gap: "16px" }}>
-        <button onClick={() => navigate("log-meeting")} className="btn-secondary" style={{ flex: 1, padding: "18px" }}>
-          Discard and Retry
-        </button>
-        <button onClick={handleConfirm} disabled={saving} className="btn-primary" style={{ flex: 2, padding: "18px" }}>
-          {saving ? "Saving Extractions..." : "Confirm & Save to CRM"}
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '4rem' }}>
+        <button className="btn-outline" style={{ flex: 1, padding: '1.2rem' }} onClick={() => navigate("log-meeting")}>Discard</button>
+        <button className="btn-primary" style={{ flex: 2, padding: '1.2rem', fontSize: '1.1rem' }} onClick={handleConfirm} disabled={saving}>
+          {saving ? "Saving to System..." : "✅ Confirm and Save Lead"}
         </button>
       </div>
     </div>
   );
 }
 
-const TEMP_BG = { hot: "rgba(239, 68, 68, 0.1)", warm: "rgba(245, 158, 11, 0.1)", cold: "rgba(59, 130, 246, 0.1)" };
-const TEMP_COLOR = { hot: "#ef4444", warm: "#f59e0b", cold: "#3b82f6" };
-const TEMP_ICON = { hot: "", warm: "", cold: "" };
-
-const SectionCard = ({ title, icon, children }) => (
-  <div className="glass-card" style={{ padding: "32px" }}>
-    <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
-      <span style={{ fontSize: "20px" }}>{icon}</span>
-      <h3 style={{ fontSize: "18px", margin: 0 }}>{title}</h3>
-    </div>
+const Field = ({ label, children }) => (
+  <div>
+    <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</label>
     {children}
   </div>
 );
 
-const Field = ({ label, children, style = {} }) => (
-  <div style={{ ...style }}>
-    <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.1em" }}>{label}</label>
-    {children}
-  </div>
-);
-
-const Input = ({ value, onChange, placeholder }) => (
-  <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-    className="glass-card" style={inputStyle} />
-);
-
-const Textarea = ({ value, onChange, placeholder, rows = 2 }) => (
-  <textarea value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} rows={rows}
-    className="glass-card" style={{ ...inputStyle, resize: "vertical", lineHeight: 1.6 }} />
-);
-
-const inputStyle = { width: "100%", padding: "14px", fontSize: "15px", color: "var(--text-primary)", outline: "none", boxSizing: "border-box" };
-const backBtn = { background: "none", border: "none", color: "var(--text-muted)", fontSize: "14px", cursor: "pointer", padding: "0 0 32px", display: "inline-flex", alignItems: "center", gap: "8px", fontWeight: 500 };
+const inputStyle = {
+  width: '100%',
+  padding: '0.75rem',
+  fontSize: '0.9rem',
+  fontFamily: 'inherit',
+  textAlign: 'left'
+};

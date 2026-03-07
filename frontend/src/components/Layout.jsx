@@ -1,76 +1,128 @@
-const NAV = [
-  { id: "dashboard", icon: "", label: "Dashboard" },
-  { id: "clients", icon: "", label: "Clients" },
-  { id: "pipeline", icon: "", label: "Pipeline" },
-  { id: "settings", icon: "", label: "Settings" },
-];
+import { useAuth } from "../hooks/useAuth";
 
-export default function Layout({ page, navigate, children }) {
+export default function Layout({ children, page, navigate }) {
+  const { user, logout } = useAuth();
+
+  const menuItems = [
+    { id: "dashboard", label: "Dashboard", icon: "📊" },
+    { id: "clients", label: "Leads", icon: "👥" },
+    { id: "followups", label: "Follow Ups", icon: "⏰" },
+    { id: "settings", label: "Settings", icon: "⚙️" },
+  ];
+
+  // Logic to hide settings if not logged in
+  const visibleMenuItems = menuItems.filter(item => {
+    if (item.id === "settings" && !user) return false;
+    return true;
+  });
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("dashboard");
+  };
+
   return (
-    <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "var(--highlight-pastel)" }}>
-
+    <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "var(--bg-secondary)" }}>
       {/* Sidebar */}
-      <div style={{
-        width: 260, flexShrink: 0,
-        background: "var(--bg-sidebar)",
-        borderRight: "1px solid var(--border-light)",
-        display: "flex", flexDirection: "column",
-        position: "fixed", top: 0, bottom: 0, left: 0,
-        zIndex: 100,
-        boxShadow: "4px 0 10px rgba(0,0,0,0.01)"
+      <aside style={{
+        width: "260px",
+        backgroundColor: "var(--bg-primary)",
+        borderRight: "1px solid var(--border-color)",
+        display: "flex",
+        flexDirection: "column",
+        position: "fixed",
+        height: "100vh",
+        zIndex: 10
       }}>
-        {/* Logo */}
-        <div style={{ padding: "40px 24px 32px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div style={{
-              width: 36, height: 36, borderRadius: "10px",
-              background: "var(--secondary-pastel)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: "18px", color: "var(--primary-accent)"
-            }}>S</div>
-            <div>
-              <div style={{ fontWeight: 700, fontSize: "18px", color: "var(--text-primary)", lineHeight: 1 }}>SalesSaathi</div>
-              <div style={{ fontSize: "11px", color: "var(--text-secondary)", marginTop: "4px", fontWeight: 500 }}>MSME CRM Platform</div>
-            </div>
-          </div>
+        <div style={{ padding: "2rem 1.5rem", borderBottom: "1px solid var(--border-color)" }}>
+          <h1 style={{ fontSize: "1.5rem", fontWeight: "700", color: "var(--accent-primary)", letterSpacing: "-0.5px" }}>
+            SalesSathi<span style={{ color: "var(--text-secondary)", fontWeight: "400" }}>.</span>
+          </h1>
+          <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: "4px" }}>MCCIA Lead Management</p>
         </div>
 
-        {/* Log Meeting CTA */}
-        <div style={{ padding: "0 20px 24px" }}>
-          <button
-            onClick={() => navigate("log-meeting")}
-            className="btn-primary"
-            style={{
-              width: "100%", padding: "12px",
-            }}>
-            Log New Meeting
-          </button>
-        </div>
-
-        {/* Nav */}
-        <nav style={{ flex: 1, padding: "0 12px" }}>
-          {NAV.map(n => (
-            <button
-              key={n.id}
-              onClick={() => navigate(n.id)}
-              className={`nav-item ${page === n.id ? 'active' : ''}`}
+        <nav style={{ flex: 1, padding: "1.5rem 1rem" }}>
+          {visibleMenuItems.map(item => (
+            <div
+              key={item.id}
+              onClick={() => navigate(item.id)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                padding: "0.75rem 1rem",
+                marginBottom: "0.5rem",
+                borderRadius: "10px",
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+                backgroundColor: page === item.id ? "var(--accent-pastel)" : "transparent",
+                color: page === item.id ? "var(--accent-primary)" : "var(--text-secondary)",
+                fontWeight: page === item.id ? "600" : "400"
+              }}
+              className="nav-item"
             >
-              <span style={{ fontSize: "18px" }}>{n.icon}</span>
-              {n.label}
-            </button>
+              <span style={{ marginRight: "12px", fontSize: "1.2rem" }}>{item.icon}</span>
+              <span>{item.label}</span>
+            </div>
           ))}
         </nav>
 
-        {/* Footer */}
-        <div style={{ padding: "24px", borderTop: "1px solid var(--border-light)" }}>
-          <div style={{ fontSize: "12px", color: "var(--text-muted)", textAlign: "center", fontWeight: 500 }}>Open Source · MIT License</div>
+        <div style={{ padding: "1.5rem", borderTop: "1px solid var(--border-color)" }}>
+          {user ? (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <div style={{
+                  width: "36px",
+                  height: "36px",
+                  borderRadius: "50%",
+                  backgroundColor: "var(--accent-pastel)",
+                  color: "var(--accent-primary)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontWeight: "700",
+                  marginRight: "10px",
+                  fontSize: "0.8rem"
+                }}>
+                  {user.full_name?.charAt(0).toUpperCase() || user.username?.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <p style={{ fontSize: "0.85rem", fontWeight: "600", color: "var(--text-primary)" }}>{user.full_name || user.username}</p>
+                  <p style={{ fontSize: "0.7rem", color: "var(--text-secondary)" }}>MCCIA Staff</p>
+                </div>
+              </div>
+              <button
+                onClick={handleLogout}
+                style={{ background: "none", fontSize: "1.1rem", padding: "4px" }}
+                title="Logout"
+              >
+                🚪
+              </button>
+            </div>
+          ) : (
+            <button
+              className="btn-outline"
+              style={{ width: "100%", fontSize: "0.85rem" }}
+              onClick={() => navigate("login")}
+            >
+              Staff Login
+            </button>
+          )}
         </div>
-      </div>
+      </aside>
 
-      {/* Main content */}
-      <div style={{ marginLeft: 260, flex: 1, minWidth: 0, transition: "padding 0.3s ease" }}>
-        {children}
-      </div>
+      {/* Main Content */}
+      <main style={{ marginLeft: "260px", flex: 1, padding: "2rem", minHeight: "100vh", position: "relative" }}>
+        <div style={{ maxWidth: "1200px", margin: "0 auto" }} className="animate-fade-in">
+          {children}
+        </div>
+      </main>
+
+      <style>{`
+        .nav-item:hover {
+          background-color: var(--bg-tertiary) !important;
+          color: var(--text-primary) !important;
+        }
+      `}</style>
     </div>
   );
 }

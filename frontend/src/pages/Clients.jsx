@@ -1,116 +1,159 @@
 import { useEffect, useState } from "react";
+import { api } from "../services/api";
 
-const STAGE_COLOR = {
-  "New Lead": { bg: "rgba(59, 130, 246, 0.15)", fg: "#3b82f6" },
-  "Meeting Done": { bg: "rgba(245, 158, 11, 0.15)", fg: "#f59e0b" },
-  "Proposal": { bg: "rgba(139, 92, 246, 0.15)", fg: "#a78bfa" },
-  "Negotiation": { bg: "rgba(249, 115, 22, 0.15)", fg: "#fb923c" },
-  "Closed Won": { bg: "rgba(16, 185, 129, 0.15)", fg: "#34d399" },
-  "Closed Lost": { bg: "rgba(239, 68, 68, 0.15)", fg: "#fca5a5" },
+const STATUS_OPTIONS = [
+  "New Lead", "Contacted", "Interested", "Follow-Up Required", "Converted", "Not Interested"
+];
+
+const STAGE_COLORS = {
+  "New Lead": "badge-new",
+  "Contacted": "badge-contacted",
+  "Interested": "badge-interested",
+  "Follow-Up Required": "badge-followup",
+  "Converted": "badge-converted",
+  "Not Interested": "badge-not-interested"
 };
-const TEMP_ICON = { hot: "", warm: "", cold: "" };
 
 export default function Clients({ navigate }) {
-  const [clients, setClients] = useState([]);
+  const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState("");
+  const [search, setSearch] = useState("");
 
-  useEffect(() => { load(); }, []);
-
-  const load = (q = "") => {
+  const fetchLeads = (q = "") => {
     setLoading(true);
-    const url = q ? `/api/clients?q=${encodeURIComponent(q)}` : "/api/clients";
-    fetch(url)
-      .then(r => r.json())
-      .then(d => { setClients(d); setLoading(false); })
+    api.leads.list(q)
+      .then(d => {
+        setLeads(d);
+        setLoading(false);
+      })
       .catch(() => setLoading(false));
   };
 
-  const handleSearch = (v) => {
-    setQuery(v);
-    clearTimeout(window._st);
-    window._st = setTimeout(() => load(v), 300);
+  useEffect(() => {
+    fetchLeads();
+  }, []);
+
+  const handleSearch = (e) => {
+    setSearch(e.target.value);
+    // Simple Debounce
+    const timeoutId = setTimeout(() => {
+      fetchLeads(e.target.value);
+    }, 500);
+    return () => clearTimeout(timeoutId);
+  };
+
+  const handleStatusChange = async (leadId, newStatus) => {
+    try {
+      await api.leads.update(leadId, { deal_stage: newStatus });
+      setLeads(leads.map(l => l.id === leadId ? { ...l, deal_stage: newStatus } : l));
+    } catch (err) {
+      alert("Failed to update status");
+    }
   };
 
   return (
-    <div style={{ padding: "48px 40px", maxWidth: "1000px", margin: "0 auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "32px" }}>
+    <div className="animate-fade-in">
+      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2.5rem" }}>
         <div>
-          <h1 style={{ fontSize: "32px", margin: 0 }}>Clients</h1>
-          <p style={{ color: "var(--text-muted)", fontSize: "15px", marginTop: "4px" }}>
-            {clients.length} registered client{clients.length !== 1 ? "s" : ""}
-          </p>
+          <h1 style={{ fontSize: "1.85rem", marginBottom: "0.5rem" }}>Lead Management</h1>
+          <p style={{ color: "var(--text-secondary)" }}>Track and manage your company leads across the funnel.</p>
         </div>
-        <button onClick={() => navigate("log-meeting")} className="btn-primary">
-          Log New Meeting
+        <button className="btn-primary" onClick={() => navigate("log-meeting")}>
+          ➕ Add New Lead
         </button>
-      </div>
+      </header>
 
-      {/* Search */}
-      <div style={{ position: "relative", marginBottom: "32px" }}>
+      <div className="card" style={{ marginBottom: "2rem", padding: "1rem" }}>
         <input
-          value={query}
-          onChange={e => handleSearch(e.target.value)}
-          placeholder="Search by name, company or phone..."
-          className="glass-card"
-          style={{ width: "100%", padding: "14px 16px 14px 24px", fontSize: "15px", outline: "none", boxSizing: "border-box", borderRadius: "14px" }}
+          type="text"
+          placeholder="Search by company, contact or phone..."
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            fetchLeads(e.target.value);
+          }}
+          style={{
+            width: "100%",
+            padding: "0.75rem 1rem",
+            borderRadius: "8px",
+            border: "1px solid var(--border-color)",
+            outline: "none",
+            backgroundColor: "var(--bg-secondary)",
+            fontSize: "0.9rem",
+            fontFamily: 'inherit'
+          }}
         />
       </div>
 
-      {loading ? (
-        <div style={{ color: "var(--text-muted)", fontSize: "15px" }}>Searching...</div>
-      ) : clients.length === 0 ? (
-        <div className="glass-card" style={{ textAlign: "center", padding: "80px 20px" }}>
-          <div style={{ color: "var(--text-primary)", fontWeight: 600, fontSize: "18px" }}>
-            {query ? "No matches found" : "No clients in your database"}
+      <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+        {loading ? (
+          <div style={{ padding: "4rem", textAlign: "center", color: "var(--text-secondary)" }}>Loading leads...</div>
+        ) : leads.length > 0 ? (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ textAlign: "left", backgroundColor: "var(--bg-secondary)" }}>
+                  <th style={{ padding: "1rem 1.5rem", fontSize: "0.7rem", color: "var(--text-muted)", fontWeight: "600", textTransform: 'uppercase' }}>Company</th>
+                  <th style={{ padding: "1rem 1.5rem", fontSize: "0.7rem", color: "var(--text-muted)", fontWeight: "600", textTransform: 'uppercase' }}>Contact Person</th>
+                  <th style={{ padding: "1rem 1.5rem", fontSize: "0.7rem", color: "var(--text-muted)", fontWeight: "600", textTransform: 'uppercase' }}>Interest / Source</th>
+                  <th style={{ padding: "1rem 1.5rem", fontSize: "0.7rem", color: "var(--text-muted)", fontWeight: "600", textTransform: 'uppercase' }}>Phone/Email</th>
+                  <th style={{ padding: "1rem 1.5rem", fontSize: "0.7rem", color: "var(--text-muted)", fontWeight: "600", textTransform: 'uppercase' }}>Status</th>
+                  <th style={{ padding: "1rem 1.5rem", fontSize: "0.7rem", color: "var(--text-muted)", fontWeight: "600", textTransform: 'uppercase' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {leads.map(lead => (
+                  <tr key={lead.id} style={{ borderBottom: "1px solid var(--border-color)" }}>
+                    <td style={{ padding: "1.25rem 1.5rem" }}>
+                      <div style={{ fontWeight: "600", fontSize: '0.9rem' }}>{lead.company}</div>
+                      <div style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>Added {new Date(lead.created_at).toLocaleDateString()}</div>
+                    </td>
+                    <td style={{ padding: "1.25rem 1.5rem", fontSize: "0.85rem" }}>{lead.name}</td>
+                    <td style={{ padding: "1.25rem 1.5rem" }}>
+                      <div style={{ fontSize: "0.8rem", color: 'var(--text-primary)' }}>{lead.service_interest || "N/A"}</div>
+                      <div style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>{lead.lead_source || "Unknown"}</div>
+                    </td>
+                    <td style={{ padding: "1.25rem 1.5rem", fontSize: "0.8rem" }}>
+                      <div>{lead.phone}</div>
+                      <div style={{ color: "var(--text-muted)" }}>{lead.email}</div>
+                    </td>
+                    <td style={{ padding: "1.25rem 1.5rem" }}>
+                      <select
+                        value={lead.deal_stage}
+                        onChange={(e) => handleStatusChange(lead.id, e.target.value)}
+                        style={{
+                          padding: "0.4rem 0.6rem",
+                          borderRadius: "6px",
+                          border: "1px solid var(--border-color)",
+                          fontSize: "0.75rem",
+                          backgroundColor: "white",
+                          cursor: "pointer",
+                          fontFamily: 'inherit',
+                          minWidth: '140px'
+                        }}
+                      >
+                        {STATUS_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                      </select>
+                    </td>
+                    <td style={{ padding: "1.25rem 1.5rem" }}>
+                      <button
+                        onClick={() => navigate("client-detail", { clientId: lead.id })}
+                        style={{ color: "var(--accent-primary)", fontWeight: "600", fontSize: "0.8rem", background: "none" }}
+                      >
+                        Profile
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-          <div style={{ color: "var(--text-muted)", fontSize: "15px", marginTop: "8px" }}>
-            {query ? "Try searching for something else." : "Log your first meeting to populate your client list automatically."}
+        ) : (
+          <div style={{ padding: "5rem 2rem", textAlign: "center", color: "var(--text-secondary)" }}>
+            <p>No leads found in the system. Start by adding one!</p>
           </div>
-        </div>
-      ) : (
-        <div style={{ display: "grid", gap: "16px" }}>
-          {clients.map(c => {
-            const sc = STAGE_COLOR[c.deal_stage] || STAGE_COLOR["New Lead"];
-            return (
-              <div key={c.id}
-                onClick={() => navigate("client-detail", { clientId: c.id })}
-                className="glass-card"
-                style={{
-                  padding: "20px 24px", cursor: "pointer", display: "flex",
-                  justifyContent: "space-between", alignItems: "center",
-                }}>
-                <div style={{ display: "flex", gap: "20px", alignItems: "center" }}>
-                  <div style={{
-                    width: 48, height: 48, borderRadius: "14px",
-                    background: "rgba(59, 130, 246, 0.1)",
-                    color: "var(--accent-blue)", display: "flex", alignItems: "center", justifyContent: "center",
-                    fontWeight: 800, fontSize: "18px", border: "1px solid rgba(59, 130, 246, 0.2)"
-                  }}>
-                    {(c.name || "?")[0].toUpperCase()}
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: "17px", color: "var(--text-primary)" }}>
-                      {c.name} {TEMP_ICON[c.deal_temp]}
-                    </div>
-                    <div style={{ fontSize: "14px", color: "var(--text-muted)", marginTop: "4px" }}>
-                      <span style={{ color: "var(--text-secondary)" }}>{c.company || "No Company"}</span>
-                      {c.phone ? ` · ${c.phone}` : ""}
-                    </div>
-                  </div>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                  <span style={{
-                    fontSize: "11px", fontWeight: 700, padding: "5px 12px", borderRadius: "999px",
-                    background: sc.bg, color: sc.fg, textTransform: "uppercase", letterSpacing: "0.05em"
-                  }}>{c.deal_stage}</span>
-                  <span style={{ color: "var(--border-glass)", fontSize: "20px" }}>›</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

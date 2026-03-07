@@ -110,6 +110,16 @@ class DataStore(ABC):
     def update_action_item(self, item_id: str, data: dict) -> dict:
         ...
 
+    # ── Auth ──────────────────────────────────────────────────────────
+
+    @abstractmethod
+    def get_user(self, username: str) -> Optional[dict]:
+        ...
+
+    @abstractmethod
+    def create_user(self, data: dict) -> dict:
+        ...
+
     # ── Dashboard helpers ─────────────────────────────────────────────
 
     @abstractmethod

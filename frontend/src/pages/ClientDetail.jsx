@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
+import { api } from "../services/api";
 
-const STAGES = ["New Lead", "Meeting Done", "Proposal", "Negotiation", "Closed Won", "Closed Lost"];
-const TEMP_COLOR = { hot: "#ef4444", warm: "#f59e0b", cold: "#3b82f6" };
-const TEMP_BG = { hot: "rgba(239, 68, 68, 0.1)", warm: "rgba(245, 158, 11, 0.1)", cold: "rgba(59, 130, 246, 0.1)" };
-const TEMP_ICON = { hot: "", warm: "", cold: "" };
+const STAGES = ["New Lead", "Contacted", "Interested", "Follow-Up Required", "Converted", "Not Interested"];
 
 export default function ClientDetail({ clientId, navigate }) {
   const [client, setClient] = useState(null);
@@ -15,211 +13,235 @@ export default function ClientDetail({ clientId, navigate }) {
 
   useEffect(() => {
     if (!clientId) return;
+    setLoading(true);
     Promise.all([
-      fetch(`/api/clients/${clientId}`).then(r => r.json()),
-      fetch(`/api/meetings?client_id=${clientId}`).then(r => r.json()),
+      api.leads.get(clientId),
+      api.meetings.listForClient(clientId)
     ]).then(([c, m]) => {
       setClient(c);
       setForm(c);
       setMeetings(m);
       setLoading(false);
-    }).catch(() => setLoading(false));
+    }).catch(err => {
+      console.error(err);
+      setLoading(false);
+    });
   }, [clientId]);
 
-  const saveClient = async () => {
+  const handleUpdate = async (e) => {
+    if (e) e.preventDefault();
     setSaving(true);
-    const updated = await fetch(`/api/clients/${clientId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    }).then(r => r.json());
-    setClient(updated);
-    setEditing(false);
-    setSaving(false);
+    try {
+      const res = await api.leads.update(clientId, form);
+      setClient(res);
+      setEditing(false);
+    } catch (err) {
+      alert("Failed to update lead data");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  if (loading) return <div style={{ padding: "48px 40px", color: "var(--text-muted)" }}>Loading client details...</div>;
-  if (!client) return <div style={{ padding: "48px 40px", color: "#ef4444" }}>Client not found.</div>;
+  const handleStageChange = async (newStage) => {
+    try {
+      const res = await api.leads.update(clientId, { deal_stage: newStage });
+      setClient(res);
+      setForm(res);
+    } catch (err) {
+      alert("Failed to update status");
+    }
+  };
+
+  if (loading) return (
+    <div style={{ padding: "4rem", textAlign: "center", color: "var(--text-secondary)" }}>
+      Loading lead details...
+    </div>
+  );
+
+  if (!client) return (
+    <div className="card" style={{ textAlign: "center", padding: "4rem" }}>
+      <p style={{ color: "var(--text-secondary)" }}>Lead not found.</p>
+      <button className="btn-outline" onClick={() => navigate("clients")} style={{ marginTop: "1rem" }}>Back to Leads</button>
+    </div>
+  );
 
   return (
-    <div style={{ padding: "48px 40px", maxWidth: "1000px", margin: "0 auto" }}>
-      <button onClick={() => navigate("clients")} style={backBtn}>
-        Back to Clients
-      </button>
+    <div className="animate-fade-in" style={{ maxWidth: '1000px', margin: '0 auto' }}>
+      <header style={{ marginBottom: "2.5rem" }}>
+        <button
+          onClick={() => navigate("clients")}
+          style={{ background: 'none', color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}
+        >
+          ← Back to Lead Management
+        </button>
 
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "40px" }}>
-        <div style={{ display: "flex", gap: "24px", alignItems: "center" }}>
-          <div style={{
-            width: 72, height: 72, borderRadius: "20px",
-            background: "rgba(59, 130, 246, 0.1)",
-            color: "var(--accent-blue)", display: "flex", alignItems: "center", justifyContent: "center",
-            fontWeight: 800, fontSize: "28px", border: "1px solid rgba(59, 130, 246, 0.2)"
-          }}>{(client.name || "?")[0].toUpperCase()}</div>
-          <div>
-            <h1 style={{ fontSize: "36px", margin: 0, display: "flex", alignItems: "center", gap: "12px" }}>
-              {client.name} <span style={{ fontSize: "24px" }}>{TEMP_ICON[client.deal_temp]}</span>
-            </h1>
-            <div style={{ color: "var(--text-muted)", fontSize: "16px", marginTop: "6px" }}>
-              <span style={{ color: "var(--text-secondary)" }}>{client.company || "No Company"}</span>
-              {client.phone ? ` · ${client.phone}` : ""}
-              {client.email ? ` · ${client.email}` : ""}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div style={{ display: "flex", gap: "1.5rem", alignItems: "center" }}>
+            <div style={{
+              width: "72px",
+              height: "72px",
+              borderRadius: "20px",
+              backgroundColor: "var(--accent-pastel)",
+              color: "var(--accent-primary)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "1.75rem",
+              fontWeight: "700"
+            }}>
+              {(client.company || "?")[0].toUpperCase()}
             </div>
-          </div>
-        </div>
-        <div style={{ display: "flex", gap: "12px" }}>
-          <button onClick={() => navigate("log-meeting")} className="btn-primary">
-            Log Meeting
-          </button>
-          <button onClick={() => setEditing(!editing)} className="btn-secondary">
-            {editing ? "Close" : "Edit Profile"}
-          </button>
-        </div>
-      </div>
-
-      {/* Deal stage bar */}
-      <div className="glass-card" style={{ padding: "32px", marginBottom: "32px" }}>
-        <div style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "16px", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em" }}>Pipeline Stage</div>
-        <div style={{ display: "flex", gap: "8px" }}>
-          {STAGES.filter(s => !s.startsWith("Closed")).map(s => (
-            <div key={s} style={{
-              flex: 1, padding: "10px", borderRadius: "10px", textAlign: "center",
-              fontSize: "13px", fontWeight: 700,
-              background: client.deal_stage === s ? "var(--accent-blue)" : "rgba(255,255,255,0.03)",
-              color: client.deal_stage === s ? "#fff" : "var(--text-muted)",
-              cursor: "pointer",
-              transition: "all 0.2s ease",
-            }} onClick={() => {
-              fetch(`/api/clients/${clientId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ deal_stage: s }) })
-                .then(r => r.json()).then(c => setClient(c));
-            }}>{s}</div>
-          ))}
-        </div>
-      </div>
-
-      {/* Edit form */}
-      {editing && (
-        <div className="glass-card" style={{ padding: "32px", marginBottom: "32px", background: "rgba(59, 130, 246, 0.05)" }}>
-          <h3 style={{ fontSize: "18px", marginBottom: "24px" }}>Update Client Details</h3>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
-            {[["name", "Full Name"], ["company", "Company Name"], ["phone", "Phone Number"], ["email", "Email Address"], ["city", "Location"]].map(([k, l]) => (
-              <div key={k}>
-                <label style={labelSt}>{l}</label>
-                <input value={form[k] || ""} onChange={e => setForm(f => ({ ...f, [k]: e.target.value }))} className="glass-card" style={inpSt} />
-              </div>
-            ))}
             <div>
-              <label style={labelSt}>Deal Temperature</label>
-              <select value={form.deal_temp || "warm"} onChange={e => setForm(f => ({ ...f, deal_temp: e.target.value }))} className="glass-card" style={{ ...inpSt, padding: "12px" }}>
-                <option value="hot">Hot Lead</option>
-                <option value="warm">Warm Lead</option>
-                <option value="cold">Cold Lead</option>
-              </select>
+              <h1 style={{ fontSize: "2rem", margin: 0 }}>{client.company}</h1>
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem', alignItems: 'center' }}>
+                <span className={`badge badge-${client.deal_stage?.toLowerCase().replace(/\s+/g, "-") || "new"}`}>{client.deal_stage}</span>
+                <span style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>Contact: <strong>{client.name}</strong></span>
+              </div>
             </div>
           </div>
-          <div style={{ display: "flex", gap: "12px", marginTop: "32px" }}>
-            <button onClick={saveClient} disabled={saving} className="btn-primary" style={{ flex: 1 }}>
+          <div style={{ display: "flex", gap: "0.75rem" }}>
+            <button className="btn-outline" onClick={() => setEditing(!editing)}>
+              {editing ? "Cancel" : "✏️ Edit Profile"}
+            </button>
+            <button className="btn-primary" onClick={() => navigate("log-meeting")}>
+              ➕ Log Interaction
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {editing ? (
+        <div className="card" style={{ marginBottom: '3rem', border: '1px solid var(--accent-primary)' }}>
+          <h2 style={{ fontSize: '1.1rem', marginBottom: '1.5rem' }}>Update Lead Information</h2>
+          <form onSubmit={handleUpdate}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem", marginBottom: "2rem" }}>
+              <Field label="Company Name">
+                <input className="btn-outline" style={inputStyle} value={form.company || ""} onChange={e => setForm({ ...form, company: e.target.value })} />
+              </Field>
+              <Field label="Contact Person">
+                <input className="btn-outline" style={inputStyle} value={form.name || ""} onChange={e => setForm({ ...form, name: e.target.value })} />
+              </Field>
+              <Field label="Phone Number">
+                <input className="btn-outline" style={inputStyle} value={form.phone || ""} onChange={e => setForm({ ...form, phone: e.target.value })} />
+              </Field>
+              <Field label="Email Address">
+                <input className="btn-outline" style={inputStyle} value={form.email || ""} onChange={e => setForm({ ...form, email: e.target.value })} />
+              </Field>
+              <Field label="Service Interest">
+                <input className="btn-outline" style={inputStyle} value={form.service_interest || ""} onChange={e => setForm({ ...form, service_interest: e.target.value })} />
+              </Field>
+              <Field label="Lead Source">
+                <input className="btn-outline" style={inputStyle} value={form.lead_source || ""} onChange={e => setForm({ ...form, lead_source: e.target.value })} />
+              </Field>
+            </div>
+            <button type="submit" className="btn-primary" disabled={saving}>
               {saving ? "Saving Changes..." : "Save Profile Updates"}
             </button>
-            <button onClick={() => { setEditing(false); setForm(client); }} className="btn-secondary" style={{ flex: 0.3 }}>
-              Cancel
-            </button>
-          </div>
+          </form>
         </div>
-      )}
-
-      {/* Meeting timeline */}
-      <div className="glass-card" style={{ padding: "32px" }}>
-        <h3 style={{ fontSize: "18px", marginBottom: "32px" }}>
-          Meeting History <span style={{ color: "var(--text-muted)", fontWeight: 400, fontSize: "14px", marginLeft: "8px" }}>({meetings.length} entries)</span>
-        </h3>
-        {meetings.length === 0 ? (
-          <div style={{ color: "var(--text-muted)", fontSize: "15px", padding: "16px 0", fontStyle: "italic" }}>No meetings logged yet for this client.</div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
-            {meetings.map((m, i) => (
-              <MeetingCard key={m.id} m={m} isLast={i === meetings.length - 1} />
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function MeetingCard({ m, isLast }) {
-  const [actions, setActions] = useState([]);
-  const [open, setOpen] = useState(false);
-
-  const loadActions = () => {
-    if (open) { setOpen(false); return; }
-    fetch(`/api/meetings/${m.id}/actions`).then(r => r.json()).then(a => { setActions(a); setOpen(true); });
-  };
-
-  return (
-    <div style={{ paddingBottom: isLast ? 0 : "32px", borderBottom: isLast ? "none" : "1px solid var(--border-glass)" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <div style={{ display: "flex", gap: "20px" }}>
-          <div style={{
-            width: "4px", background: TEMP_COLOR[m.deal_temp] || "var(--accent-blue)",
-            borderRadius: "4px", flexShrink: 0, marginTop: "8px"
-          }} />
-          <div>
-            <div style={{ display: "flex", gap: "12px", alignItems: "center", marginBottom: "12px" }}>
-              <span style={{ fontWeight: 800, fontSize: "16px", color: "var(--text-primary)" }}>{m.meeting_date}</span>
-              <span style={{
-                fontSize: "11px", fontWeight: 700, padding: "4px 12px", borderRadius: "999px",
-                background: TEMP_BG[m.deal_temp] || "rgba(255,255,255,0.05)",
-                color: TEMP_COLOR[m.deal_temp] || "var(--text-muted)",
-                textTransform: "uppercase", letterSpacing: "0.05em"
-              }}>{TEMP_ICON[m.deal_temp]} {m.deal_temp}</span>
+      ) : (
+        <div style={{ display: "grid", gridTemplateColumns: "2.5fr 1fr", gap: "2rem", marginBottom: "3rem" }}>
+          {/* Main Info */}
+          <div className="card">
+            <h2 style={{ fontSize: '1rem', fontWeight: '700', marginBottom: '1.5rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Lead Status</h2>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '2rem' }}>
+              {STAGES.map(s => (
+                <button
+                  key={s}
+                  onClick={() => handleStageChange(s)}
+                  style={{
+                    padding: '0.5rem 0.75rem',
+                    borderRadius: '8px',
+                    fontSize: '0.75rem',
+                    fontWeight: '600',
+                    border: '1px solid var(--border-color)',
+                    backgroundColor: client.deal_stage === s ? 'var(--accent-primary)' : 'transparent',
+                    color: client.deal_stage === s ? 'white' : 'var(--text-secondary)',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {s}
+                </button>
+              ))}
             </div>
-            {m.summary && <p style={{ margin: "0 0 16px", color: "var(--text-secondary)", fontSize: "15px", lineHeight: 1.7 }}>{m.summary}</p>}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "24px" }}>
-              {m.problems && <div style={{ fontSize: "14px", color: "var(--text-muted)" }}>
-                <strong style={{ color: "#ef4444", fontSize: "12px" }}>PAIN POINTS:</strong> {m.problems}
-              </div>}
-              {m.follow_up_date && <div style={{ fontSize: "14px", color: "var(--accent-blue)", fontWeight: 600 }}>
-                Follow-up scheduled for {m.follow_up_date}
-              </div>}
+
+            <h2 style={{ fontSize: '1rem', fontWeight: '700', marginBottom: '1.5rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginTop: '2rem' }}>Interaction Timeline</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              {meetings.length === 0 ? (
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', fontStyle: 'italic', padding: '1rem' }}>No interactions recorded yet.</p>
+              ) : (
+                meetings.map((m, idx) => (
+                  <div key={m.id} style={{ display: 'flex', gap: '1.5rem', position: 'relative' }}>
+                    {idx !== meetings.length - 1 && <div style={{ position: 'absolute', left: '7px', top: '24px', bottom: '-1.5rem', width: '2px', backgroundColor: 'var(--border-color)' }}></div>}
+                    <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'var(--accent-primary)', marginTop: '4px', zIndex: 1, border: '4px solid var(--bg-card)' }}></div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                        <span style={{ fontWeight: '700', fontSize: '0.9rem' }}>{new Date(m.meeting_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>via {m.source || 'Direct'}</span>
+                      </div>
+                      <p style={{ fontSize: '0.9rem', color: 'var(--text-primary)', lineHeight: '1.6', backgroundColor: 'var(--bg-secondary)', padding: '1rem', borderRadius: '8px' }}>
+                        {m.summary}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
-        </div>
-        <button onClick={loadActions} className="btn-secondary" style={{ padding: "8px 16px", fontSize: "12px", whiteSpace: "nowrap" }}>
-          {open ? "Hide Actions" : "View Actions"}
-        </button>
-      </div>
 
-      {open && (
-        <div className="glass-card" style={{ marginLeft: "24px", marginTop: "20px", padding: "16px 20px", background: "rgba(255,255,255,0.02)" }}>
-          {actions.length === 0 ? (
-            <div style={{ fontSize: "13px", color: "var(--text-muted)" }}>No tasks identified for this meeting.</div>
-          ) : (
-            actions.map(a => (
-              <div key={a.id} style={{ display: "flex", gap: "12px", alignItems: "center", padding: "8px 0" }}>
-                <input type="checkbox" defaultChecked={a.done} style={{ width: "16px", height: "16px", accentColor: "var(--accent-blue)" }} onChange={e =>
-                  fetch(`/api/actions/${a.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ done: e.target.checked }) })
-                } />
-                <span style={{ fontSize: "14px", color: a.done ? "var(--text-muted)" : "var(--text-primary)", textDecoration: a.done ? "line-through" : "none" }}>
-                  {a.description}
-                </span>
-                {a.due_date && <span style={{ fontSize: "12px", color: "var(--text-muted)" }}> · due {a.due_date}</span>}
-                <span style={{ fontSize: "10px", background: "rgba(255,255,255,0.05)", borderRadius: "6px", padding: "4px 8px", color: "var(--text-secondary)", fontWeight: 700, textTransform: "uppercase" }}>
-                  {a.assigned_to === "client" ? "Client Task" : "Our Task"}
-                </span>
+          {/* Sidebar Area */}
+          <aside style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div className="card">
+              <h3 style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '1rem' }}>Follow-up</h3>
+              {client.next_follow_up_date ? (
+                <div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--accent-primary)', marginBottom: '0.5rem' }}>
+                    {new Date(client.next_follow_up_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                  </div>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                    {client.follow_up_notes || "Scheduled follow-up."}
+                  </p>
+                </div>
+              ) : (
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>No follow-up scheduled.</p>
+              )}
+            </div>
+
+            <div className="card">
+              <h3 style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '1rem' }}>Metadata</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div>
+                  <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>SERVICE INTEREST</p>
+                  <p style={{ fontSize: '0.8rem', fontWeight: '600' }}>{client.service_interest || "N/A"}</p>
+                </div>
+                <div>
+                  <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>LEAD SOURCE</p>
+                  <p style={{ fontSize: '0.8rem', fontWeight: '600' }}>{client.lead_source || "Manual Entry"}</p>
+                </div>
+                <div>
+                  <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>PHONE</p>
+                  <p style={{ fontSize: '0.8rem', fontWeight: '600' }}>{client.phone || "N/A"}</p>
+                </div>
               </div>
-            ))
-          )}
+            </div>
+          </aside>
         </div>
       )}
     </div>
   );
 }
 
-const backBtn = {
-  background: "none", border: "none", color: "var(--text-muted)",
-  fontSize: "14px", cursor: "pointer", padding: "0 0 32px",
-  display: "inline-flex", alignItems: "center", gap: "8px", fontWeight: 500
+const Field = ({ label, children }) => (
+  <div>
+    <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '0.4rem', textTransform: 'uppercase' }}>{label}</label>
+    {children}
+  </div>
+);
+
+const inputStyle = {
+  width: '100%',
+  padding: '0.75rem',
+  fontSize: '0.9rem',
+  fontFamily: 'inherit',
+  textAlign: 'left'
 };
-const labelSt = { display: "block", fontSize: "12px", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.1em" };
-const inpSt = { width: "100%", padding: "14px", fontSize: "15px", color: "var(--text-primary)", outline: "none", boxSizing: "border-box" };

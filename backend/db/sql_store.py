@@ -26,6 +26,16 @@ def _uid():
     return str(uuid.uuid4())
 
 
+class User(Base):
+    __tablename__ = "users"
+    id            = Column(String, primary_key=True, default=_uid)
+    username      = Column(String, unique=True, nullable=False)
+    password_hash = Column(String, nullable=False)
+    full_name     = Column(String)
+    email         = Column(String)
+    created_at    = Column(DateTime, default=datetime.utcnow)
+
+
 class BusinessProfile(Base):
     __tablename__ = "business"
     id            = Column(String, primary_key=True, default=_uid)
@@ -67,10 +77,18 @@ class Client(Base):
     email        = Column(String)
     city         = Column(String)
     industry     = Column(String)
-    deal_stage   = Column(String, default="New Lead")   # New Lead | Meeting Done | Proposal | Negotiation | Closed Won | Closed Lost
+    deal_stage   = Column(String, default="New Lead")   # New Lead | Contacted | Interested | Follow-Up Required | Converted | Not Interested
     deal_temp    = Column(String, default="warm")       # hot | warm | cold
+    service_interest = Column(String)
+    lead_source      = Column(String)
     health_score = Column(Integer, default=50)
     notes        = Column(Text)
+    
+    # Follow-up info
+    next_follow_up_date = Column(Date)
+    follow_up_notes     = Column(Text)
+    follow_up_status    = Column(String, default="pending") # pending | completed | cancelled
+
     created_at   = Column(DateTime, default=datetime.utcnow)
     updated_at   = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     meetings     = relationship("Meeting", back_populates="client", cascade="all, delete-orphan")
@@ -336,30 +354,73 @@ class SQLDataStore(DataStore):
             s.refresh(row)
             return _row(row)
 
+    # ── Auth ──────────────────────────────────────────────────────────
+    
+    def get_user(self, username: str) -> Optional[dict]:
+        with self._Session() as s:
+            row = s.query(User).filter_by(username=username).first()
+            return _row(row) if row else None
+
+    def create_user(self, data: dict) -> dict:
+        with self._Session() as s:
+            row = User(id=_uid(), **data)
+            s.add(row)
+            s.commit()
+            s.refresh(row)
+            return _row(row)
+
     # ── Dashboard ─────────────────────────────────────────────────────
 
     def get_dashboard_summary(self) -> dict:
         today = date.today()
         with self._Session() as s:
+            # Overdue follow ups based on Meeting table (historical)
             overdue = (
                 s.query(Meeting)
                 .filter(Meeting.follow_up_date < today, Meeting.status != "closed")
                 .count()
             )
+            # Today's follow ups based on Client table (current primary tracking)
             due_today = (
-                s.query(Meeting)
-                .filter(Meeting.follow_up_date == today)
+                s.query(Client)
+                .filter(Client.next_follow_up_date == today)
                 .count()
             )
+            # Total leads
+            total_leads = s.query(Client).count()
+            # New leads today
+            new_leads = (
+                s.query(Client)
+                .filter(func.date(Client.created_at) == today)
+                .count()
+            )
+            # Converted leads
+            converted = (
+                s.query(Client)
+                .filter_by(deal_stage="Converted")
+                .count()
+            )
+            
+            # Hot deals
             hot_deals = (
                 s.query(Client)
                 .filter_by(deal_temp="hot")
                 .count()
             )
-            total_clients = s.query(Client).count()
+            
+            # List of today's follow-ups for the dashboard
+            today_follow_ups = (
+                s.query(Client)
+                .filter(Client.next_follow_up_date == today)
+                .all()
+            )
+
             return {
-                "overdue_follow_ups": overdue,
-                "due_today": due_today,
+                "total_leads": total_leads,
+                "new_leads": new_leads,
+                "follow_ups_today": due_today,
+                "converted_leads": converted,
                 "hot_deals": hot_deals,
-                "total_clients": total_clients,
+                "overdue_follow_ups": overdue,
+                "today_follow_ups_list": [_row(c) for c in today_follow_ups]
             }
