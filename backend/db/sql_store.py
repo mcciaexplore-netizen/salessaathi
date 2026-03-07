@@ -168,6 +168,30 @@ class SQLDataStore(DataStore):
 
     def init_schema(self) -> None:
         Base.metadata.create_all(self._engine)
+        # Handle SQLite migrations for existing tables
+        if self._engine.name == "sqlite":
+            import sqlite3
+            # Extract path from sqlite:///...
+            db_path = str(self._engine.url).replace("sqlite:///", "")
+            if os.path.exists(db_path):
+                conn = sqlite3.connect(db_path)
+                cursor = conn.cursor()
+                cursor.execute("PRAGMA table_info(clients)")
+                columns = [row[1] for row in cursor.fetchall()]
+                
+                missing = {
+                    "service_interest": "TEXT",
+                    "lead_source": "TEXT",
+                    "next_follow_up_date": "DATE",
+                    "follow_up_notes": "TEXT",
+                    "follow_up_status": "TEXT DEFAULT 'pending'",
+                    "updated_at": "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+                }
+                for col, col_type in missing.items():
+                    if col not in columns:
+                        cursor.execute(f"ALTER TABLE clients ADD COLUMN {col} {col_type}")
+                conn.commit()
+                conn.close()
 
     # ── Business ──────────────────────────────────────────────────────
 
