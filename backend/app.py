@@ -48,33 +48,15 @@ def setup_status():
 @app.post("/api/setup/test-db")
 def test_db_connection():
     data    = request.json or {}
-    db_type = data.get("db_type", "sqlite")
+    db_type = data.get("db_type", "supabase")
     try:
-        if db_type == "sqlite":
-            from db.sql_store import SQLDataStore
-            project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            raw  = data.get("sqlite_path", "./data/salessaathi.db")
-            path = os.path.join(project_root, raw) if not os.path.isabs(raw) else raw
-            try:
-                os.makedirs(os.path.dirname(path), exist_ok=True)
-            except OSError:
-                if os.environ.get("VERCEL"):
-                    path = "/tmp/salessaathi.db"
-                else:
-                    pass
-            
-            store = SQLDataStore(f"sqlite:///{path}")
-            store.init_schema()
-            ok = store.is_ready()
-        elif db_type in ("supabase", "postgres"):
-            from db.sql_store import SQLDataStore
-            db_url = data.get("supabase_db_url") or data.get("database_url")
-            if not db_url:
-                db_url = os.environ.get("SUPABASE_DB_URL") or os.environ.get("DATABASE_URL")
-            if not db_url:
-                raise ValueError("No database URL provided for Supabase.")
-            store = SQLDataStore(db_url)
-            store.init_schema()
+        if db_type in ("supabase", "postgres"):
+            from db.supabase_store import SupabaseDataStore
+            db_url = data.get("supabase_url") or os.environ.get("SUPABASE_URL")
+            db_key = data.get("supabase_anon_key") or os.environ.get("SUPABASE_ANON_KEY")
+            if not db_url or not db_key:
+                raise ValueError("No database URL or ANON KEY provided for Supabase.")
+            store = SupabaseDataStore(db_url, db_key)
             ok = store.is_ready()
         elif db_type == "pocketbase":
             from db.pocketbase_store import PocketBaseDataStore
@@ -96,18 +78,18 @@ def test_db_connection():
 @app.post("/api/setup/save")
 def save_setup():
     data      = request.json or {}
-    db_type   = data.get("db_type", "sqlite")
+    db_type   = data.get("db_type", "supabase")
     db_config = data.get("db_config", {})
     business  = data.get("business", {})
     api_keys  = data.get("api_keys", [])
     user_data = data.get("user", {})
 
     env_lines = [f"DB_TYPE={db_type}", "SETUP_DONE=true", f"SECRET_KEY={_random_secret()}"]
-    if db_type == "sqlite":
-        env_lines.append(f"SQLITE_PATH={db_config.get('sqlite_path', './data/salessaathi.db')}")
-    elif db_type in ("supabase", "postgres"):
-        url = db_config.get("supabase_db_url") or db_config.get("database_url", "")
-        env_lines.append(f"SUPABASE_DB_URL={url}")
+    if db_type in ("supabase", "postgres"):
+        url = db_config.get("supabase_url", "")
+        key = db_config.get("supabase_anon_key", "")
+        if url: env_lines.append(f"SUPABASE_URL={url}")
+        if key: env_lines.append(f"SUPABASE_ANON_KEY={key}")
     elif db_type == "pocketbase":
         env_lines.append(f"POCKETBASE_URL={db_config.get('pb_url', 'http://127.0.0.1:8090')}")
         env_lines.append(f"POCKETBASE_EMAIL={db_config.get('pb_email', '')}")
@@ -121,12 +103,13 @@ def save_setup():
         pass  # Ignore on Vercel's read-only filesystem
 
     os.environ.update({"DB_TYPE": db_type, "SETUP_DONE": "true"})
-    if db_type == "sqlite":
-        os.environ["SQLITE_PATH"] = db_config.get("sqlite_path", "./data/salessaathi.db")
-    elif db_type in ("supabase", "postgres"):
-        url = db_config.get("supabase_db_url") or db_config.get("database_url", "")
+    if db_type in ("supabase", "postgres"):
+        url = db_config.get("supabase_url", "")
+        key = db_config.get("supabase_anon_key", "")
         if url:
-             os.environ["SUPABASE_DB_URL"] = url
+             os.environ["SUPABASE_URL"] = url
+        if key:
+             os.environ["SUPABASE_ANON_KEY"] = key
 
     get_store.cache_clear()
     store = get_store()

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Welcome from "./steps/Welcome.jsx";
 import DBPicker from "./steps/DBPicker.jsx";
-import SQLiteSetup from "./steps/SQLiteSetup.jsx";
+
 import PocketBaseSetup from "./steps/PocketBaseSetup.jsx";
 import BusinessProfile from "./steps/BusinessProfile.jsx";
 import APIKeys from "./steps/APIKeys.jsx";
@@ -30,7 +30,7 @@ function ProgressBar({ current }) {
 export default function SetupWizard({ onComplete }) {
   const [step, setStep] = useState("welcome");
   const [state, setState] = useState({
-    db_type: "sqlite",
+    db_type: "supabase",
     db_config: {},
     business: {},
     api_keys: [],
@@ -110,14 +110,12 @@ export default function SetupWizard({ onComplete }) {
         overflow: "hidden",
       }}>
         {step === "welcome" && <Welcome onNext={() => next("db-pick")} />}
-        {step === "db-pick" && <DBPicker value={state.db_type} onChange={t => update({ db_type: t })} onNext={() => next("db-config")} />}
-        {step === "db-config" && state.db_type === "sqlite" && (
-          <SQLiteSetup value={state.db_config} onChange={c => update({ db_config: c })} onNext={() => next("business")} onBack={() => next("db-pick")} />
-        )}
+        {step === "db-pick" && <DBPicker value={state.db_type} onChange={t => update({ db_type: t })} onNext={() => state.db_type === "supabase" ? next("business") : next("db-config")} />}
+        {step === "db-config" && state.db_type === "supabase" && null}
         {step === "db-config" && state.db_type === "pocketbase" && (
           <PocketBaseSetup value={state.db_config} onChange={c => update({ db_config: c })} onNext={() => next("business")} onBack={() => next("db-pick")} />
         )}
-        {step === "business" && <BusinessProfile value={state.business} onChange={b => update({ business: b })} onNext={() => next("api-keys")} onBack={() => next("db-config")} />}
+        {step === "business" && <BusinessProfile value={state.business} onChange={b => update({ business: b })} onNext={() => next("api-keys")} onBack={() => state.db_type === "supabase" ? next("db-pick") : next("db-config")} />}
         {step === "api-keys" && <APIKeys value={state.api_keys} onChange={k => update({ api_keys: k })} onNext={handleFinish} onBack={() => next("business")} saving={saving} />}
         {step === "done" && <Done onComplete={onComplete} />}
       </div>

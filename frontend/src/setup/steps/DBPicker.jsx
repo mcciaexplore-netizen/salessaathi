@@ -1,13 +1,13 @@
 const OPTIONS = [
   {
-    id: "sqlite",
-    icon: "💾",
-    title: "My computer only",
-    subtitle: "Best for solo use — 1 or 2 people",
-    desc: "Data is stored as a file on this computer. Zero setup. Works offline. Fastest option to get started.",
-    badge: "Recommended for most",
-    badgeBg: "#d1fae5",
-    badgeColor: "#065f46",
+    id: "supabase",
+    icon: "☁️",
+    title: "Supabase (Cloud)",
+    subtitle: "Best for cloud deployment and scalability",
+    desc: "Data is stored securely in your Supabase project. Required for Vercel deployment.",
+    badge: "Recommended",
+    badgeBg: "#dcfce7",
+    badgeColor: "#166534",
   },
   {
     id: "pocketbase",

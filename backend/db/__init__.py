@@ -13,26 +13,15 @@ from .base import DataStore
 
 @lru_cache(maxsize=1)
 def get_store() -> DataStore:
-    db_type = os.getenv("DB_TYPE", "sqlite").lower()
+    db_type = os.getenv("DB_TYPE", "supabase").lower()
 
-    if db_type == "sqlite":
-        from config import Config
-        from .sql_store import SQLDataStore
-        # Resolve path using Config which already handles Vercel /tmp logic
-        db_path = Config.SQLITE_PATH
-        try:
-            os.makedirs(os.path.dirname(db_path), exist_ok=True)
-        except OSError:
-            pass
-        db_url = f"sqlite:///{db_path}"
-        store = SQLDataStore(db_url)
-
-    elif db_type in ("supabase", "postgres"):
-        from .sql_store import SQLDataStore
-        db_url = os.getenv("SUPABASE_DB_URL") or os.getenv("DATABASE_URL")
-        if not db_url:
-            raise ValueError("For Supabase/Postgres, SUPABASE_DB_URL or DATABASE_URL must be set in .env")
-        store = SQLDataStore(db_url)
+    if db_type == "supabase" or db_type == "postgres":
+        from .supabase_store import SupabaseDataStore
+        url = os.getenv("SUPABASE_URL")
+        key = os.getenv("SUPABASE_ANON_KEY")
+        if not url or not key:
+            raise ValueError("SUPABASE_URL and SUPABASE_ANON_KEY must be set in .env")
+        store = SupabaseDataStore(url, key)
 
     elif db_type == "pocketbase":
         from .pocketbase_store import PocketBaseDataStore
@@ -43,10 +32,11 @@ def get_store() -> DataStore:
         )
 
     else:
-        raise ValueError(
-            f"Unknown DB_TYPE '{db_type}'. "
-            "Set DB_TYPE to 'sqlite' or 'pocketbase' in your .env file."
-        )
+        # Default to supabase if unknown
+        from .supabase_store import SupabaseDataStore
+        url = os.getenv("SUPABASE_URL")
+        key = os.getenv("SUPABASE_ANON_KEY")
+        store = SupabaseDataStore(url, key)
 
     store.init_schema()
     return store

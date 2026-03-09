@@ -16,9 +16,9 @@ class Config:
     PORT        = int(os.getenv("PORT", 5000))
 
     # ── Database ──────────────────────────────────────────────────────
-    DB_TYPE     = os.getenv("DB_TYPE", "sqlite")          # sqlite | pocketbase | supabase
-    SQLITE_PATH = os.getenv("SQLITE_PATH", "/tmp/salessaathi.db" if os.getenv("VERCEL") else "./data/salessaathi.db")
-    SUPABASE_DB = os.getenv("SUPABASE_DB_URL") or os.getenv("DATABASE_URL", "")
+    DB_TYPE     = os.getenv("DB_TYPE", "supabase")
+    SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+    SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
     PB_URL      = os.getenv("POCKETBASE_URL", "http://127.0.0.1:8090")
     PB_EMAIL    = os.getenv("POCKETBASE_EMAIL", "")
     PB_PASSWORD = os.getenv("POCKETBASE_PASSWORD", "")
